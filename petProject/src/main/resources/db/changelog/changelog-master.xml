@@ -11,6 +11,7 @@
     <include file="db/changelog/1.0/add-indexes.xml"/>
     <include file="db/changelog/1.0/insert-test-admin.xml"/>
     <include file="db/changelog/1.0/insert-test-data.xml"/>
+    <include file="db/changelog/1.0/add-user-id-to-owners.xml"/>
 
 </databaseChangeLog>
 

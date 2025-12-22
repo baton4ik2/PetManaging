@@ -1,6 +1,8 @@
 package ru.akbirov.petproject.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.akbirov.petproject.dto.PetRequestDto;
@@ -8,6 +10,8 @@ import ru.akbirov.petproject.dto.PetResponseDto;
 import ru.akbirov.petproject.entity.Owner;
 import ru.akbirov.petproject.entity.Pet;
 import ru.akbirov.petproject.entity.PetType;
+import ru.akbirov.petproject.entity.User;
+import ru.akbirov.petproject.exception.AccessDeniedException;
 import ru.akbirov.petproject.exception.OwnerNotFoundException;
 import ru.akbirov.petproject.exception.PetNotFoundException;
 import ru.akbirov.petproject.mapper.PetMapper;
@@ -24,11 +28,38 @@ public class PetService {
     private final PetRepository petRepository;
     private final OwnerRepository ownerRepository;
     private final PetMapper petMapper;
+    private final UserService userService;
+    
+    private boolean isAdmin() {
+        return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
+    }
+    
+    private void checkPetOwnership(Pet pet) {
+        if (!isAdmin()) {
+            User currentUser = userService.getCurrentUser();
+            Owner petOwner = pet.getOwner();
+            if (petOwner == null || petOwner.getUser() == null || 
+                !petOwner.getUser().getId().equals(currentUser.getId())) {
+                throw new AccessDeniedException("You can only manage your own pets");
+            }
+        }
+    }
     
     @Transactional
     public PetResponseDto createPet(PetRequestDto requestDto) {
         Owner owner = ownerRepository.findById(requestDto.getOwnerId())
                 .orElseThrow(() -> new OwnerNotFoundException(requestDto.getOwnerId()));
+        
+        // Проверяем права: только админ может создавать питомцев для любого владельца
+        // Обычный пользователь может создавать только для своего владельца
+        if (!isAdmin()) {
+            User currentUser = userService.getCurrentUser();
+            if (owner.getUser() == null || !owner.getUser().getId().equals(currentUser.getId())) {
+                throw new AccessDeniedException("You can only create pets for your own owner profile");
+            }
+        }
         
         Pet pet = petMapper.toEntity(requestDto);
         pet.setOwner(owner);
@@ -70,8 +101,19 @@ public class PetService {
         Pet pet = petRepository.findById(id)
                 .orElseThrow(() -> new PetNotFoundException(id));
         
+        // Проверяем права доступа
+        checkPetOwnership(pet);
+        
         Owner owner = ownerRepository.findById(requestDto.getOwnerId())
                 .orElseThrow(() -> new OwnerNotFoundException(requestDto.getOwnerId()));
+        
+        // Если не админ, проверяем, что новый владелец тоже принадлежит текущему пользователю
+        if (!isAdmin()) {
+            User currentUser = userService.getCurrentUser();
+            if (owner.getUser() == null || !owner.getUser().getId().equals(currentUser.getId())) {
+                throw new AccessDeniedException("You can only assign pets to your own owner profile");
+            }
+        }
         
         pet.setName(requestDto.getName());
         pet.setType(requestDto.getType());
@@ -87,9 +129,12 @@ public class PetService {
     
     @Transactional
     public void deletePet(Long id) {
-        if (!petRepository.existsById(id)) {
-            throw new PetNotFoundException(id);
-        }
+        Pet pet = petRepository.findById(id)
+                .orElseThrow(() -> new PetNotFoundException(id));
+        
+        // Проверяем права доступа
+        checkPetOwnership(pet);
+        
         petRepository.deleteById(id);
     }
     

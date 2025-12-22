@@ -40,7 +40,7 @@ public class UserService {
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .roles(user.getRoles().stream()
-                        .map(role -> role.getName().name())
+                        .map(role -> role.getName().name().replace("ROLE_", ""))
                         .collect(Collectors.toSet()))
                 .enabled(user.getEnabled())
                 .createdAt(user.getCreatedAt())

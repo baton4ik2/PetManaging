@@ -1,12 +1,16 @@
 package ru.akbirov.petproject.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.akbirov.petproject.dto.OwnerRequestDto;
 import ru.akbirov.petproject.dto.OwnerResponseDto;
 import ru.akbirov.petproject.dto.PetResponseDto;
 import ru.akbirov.petproject.entity.Owner;
+import ru.akbirov.petproject.entity.User;
+import ru.akbirov.petproject.exception.AccessDeniedException;
 import ru.akbirov.petproject.exception.EmailAlreadyExistsException;
 import ru.akbirov.petproject.exception.OwnerNotFoundException;
 import ru.akbirov.petproject.mapper.OwnerMapper;
@@ -23,6 +27,22 @@ public class OwnerService {
     private final OwnerRepository ownerRepository;
     private final OwnerMapper ownerMapper;
     private final PetMapper petMapper;
+    private final UserService userService;
+    
+    private boolean isAdmin() {
+        return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
+    }
+    
+    private void checkOwnerOwnership(Owner owner) {
+        if (!isAdmin()) {
+            User currentUser = userService.getCurrentUser();
+            if (owner.getUser() == null || !owner.getUser().getId().equals(currentUser.getId())) {
+                throw new AccessDeniedException("You can only manage your own owner profile");
+            }
+        }
+    }
     
     @Transactional
     public OwnerResponseDto createOwner(OwnerRequestDto requestDto) {
@@ -31,6 +51,13 @@ public class OwnerService {
         }
         
         Owner owner = ownerMapper.toEntity(requestDto);
+        
+        // Если не админ, автоматически привязываем владельца к текущему пользователю
+        if (!isAdmin()) {
+            User currentUser = userService.getCurrentUser();
+            owner.setUser(currentUser);
+        }
+        
         Owner savedOwner = ownerRepository.save(owner);
         return ownerMapper.toResponseDto(savedOwner);
     }
@@ -68,6 +95,9 @@ public class OwnerService {
         Owner owner = ownerRepository.findById(id)
                 .orElseThrow(() -> new OwnerNotFoundException(id));
         
+        // Проверяем права доступа
+        checkOwnerOwnership(owner);
+        
         if (!owner.getEmail().equals(requestDto.getEmail()) 
                 && ownerRepository.existsByEmail(requestDto.getEmail())) {
             throw new EmailAlreadyExistsException(requestDto.getEmail());
@@ -91,9 +121,12 @@ public class OwnerService {
     
     @Transactional
     public void deleteOwner(Long id) {
-        if (!ownerRepository.existsById(id)) {
-            throw new OwnerNotFoundException(id);
-        }
+        Owner owner = ownerRepository.findById(id)
+                .orElseThrow(() -> new OwnerNotFoundException(id));
+        
+        // Проверяем права доступа
+        checkOwnerOwnership(owner);
+        
         ownerRepository.deleteById(id);
     }
     
