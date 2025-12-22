@@ -18,6 +18,8 @@ docker-compose up -d
 - Backend API: http://localhost:8081/api
 - Swagger UI: http://localhost:8081/swagger-ui.html
 
+**Примечание:** Для работы с приложением необходимо сначала зарегистрироваться или войти через фронтенд. Все API эндпоинты (кроме `/api/auth/**`) требуют JWT токен.
+
 **Остановка:**
 ```bash
 docker-compose down
@@ -32,22 +34,58 @@ docker-compose ps
 
 Все сервисы должны быть в статусе "Up".
 
-### 2. Проверка API
+### 2. Регистрация и вход
+
+1. Откройте http://localhost:3000 в браузере
+2. Нажмите "Register" для создания нового аккаунта
+3. Заполните форму регистрации (username, email, password)
+4. После регистрации вы автоматически войдете в систему
+
+Или используйте API напрямую:
 ```bash
-curl http://localhost:8081/api/statistics
+# Регистрация
+curl -X POST http://localhost:8081/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","email":"test@example.com","password":"password123"}'
+
+# Вход (сохраните токен из ответа)
+curl -X POST http://localhost:8081/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","password":"password123"}'
+```
+
+### 3. Проверка API (требует токен)
+```bash
+# Замените YOUR_JWT_TOKEN на токен из шага 2
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  http://localhost:8081/api/statistics
 ```
 
 Должна вернуться статистика с тестовыми данными.
 
-### 3. Откройте браузер
-Перейдите на http://localhost:3000 - вы увидите главную страницу приложения.
+### 4. Откройте браузер
+Перейдите на http://localhost:3000 - вы увидите страницу входа. После регистрации/входа откроется главная страница приложения.
 
 ## Тестовые запросы
+
+> **⚠️ Важно:** Все запросы ниже требуют JWT токен. Сначала получите токен через `/api/auth/login` или `/api/auth/register`.
+
+### Получить токен (если еще не получили):
+```bash
+# Замените на свои данные
+TOKEN=$(curl -s -X POST http://localhost:8081/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","password":"password123"}' \
+  | grep -o '"token":"[^"]*' | cut -d'"' -f4)
+
+echo "Token: $TOKEN"
+```
 
 ### Создать владельца:
 ```bash
 curl -X POST http://localhost:8081/api/owners \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "firstName": "Иван",
     "lastName": "Иванов",
@@ -61,6 +99,7 @@ curl -X POST http://localhost:8081/api/owners \
 ```bash
 curl -X POST http://localhost:8081/api/pets \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "name": "Барсик",
     "type": "CAT",
@@ -74,22 +113,26 @@ curl -X POST http://localhost:8081/api/pets \
 
 ### Получить всех владельцев:
 ```bash
-curl http://localhost:8081/api/owners
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8081/api/owners
 ```
 
 ### Получить всех питомцев:
 ```bash
-curl http://localhost:8081/api/pets
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8081/api/pets
 ```
 
 ### Поиск питомцев:
 ```bash
-curl "http://localhost:8081/api/pets?search=Барсик"
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8081/api/pets?search=Барсик"
 ```
 
 ### Получить статистику:
 ```bash
-curl http://localhost:8081/api/statistics
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8081/api/statistics
 ```
 
 ## Локальная разработка (без Docker)

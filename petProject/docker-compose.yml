@@ -30,6 +30,8 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      JWT_SECRET: ${JWT_SECRET:-your-256-bit-secret-key-must-be-at-least-32-characters-long-for-production-change-in-production}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
     ports:
       - "8081:8081"
     depends_on:
