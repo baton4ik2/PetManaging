@@ -1,0 +1,62 @@
+services:
+  # PostgreSQL база данных
+  postgres:
+    image: postgres:15-alpine
+    container_name: pet-project-postgres
+    environment:
+      POSTGRES_DB: pet_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"  # Изменен внешний порт на 5433, чтобы не конфликтовать с локальным PostgreSQL
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pet-network
+
+  # Spring Boot приложение
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pet-project-app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pet_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - pet-network
+    restart: unless-stopped
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: pet-project-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - app
+    networks:
+      - pet-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  pet-network:
+    driver: bridge
+

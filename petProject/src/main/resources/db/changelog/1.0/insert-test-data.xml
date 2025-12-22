@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="insert-test-owners" author="pet-project">
+        <insert tableName="owners">
+            <column name="first_name" value="Иван"/>
+            <column name="last_name" value="Иванов"/>
+            <column name="email" value="ivan.ivanov@example.com"/>
+            <column name="phone" value="+7-999-111-22-33"/>
+            <column name="address" value="Москва, ул. Ленина, д. 10, кв. 5"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="owners">
+            <column name="first_name" value="Мария"/>
+            <column name="last_name" value="Петрова"/>
+            <column name="email" value="maria.petrova@example.com"/>
+            <column name="phone" value="+7-999-222-33-44"/>
+            <column name="address" value="Санкт-Петербург, Невский проспект, д. 25"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="owners">
+            <column name="first_name" value="Александр"/>
+            <column name="last_name" value="Сидоров"/>
+            <column name="email" value="alex.sidorov@example.com"/>
+            <column name="phone" value="+7-999-333-44-55"/>
+            <column name="address" value="Казань, ул. Баумана, д. 15, кв. 12"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="owners">
+            <column name="first_name" value="Елена"/>
+            <column name="last_name" value="Козлова"/>
+            <column name="email" value="elena.kozlova@example.com"/>
+            <column name="phone" value="+7-999-444-55-66"/>
+            <column name="address" value="Екатеринбург, пр. Ленина, д. 50"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="owners">
+            <column name="first_name" value="Дмитрий"/>
+            <column name="last_name" value="Смирнов"/>
+            <column name="email" value="dmitry.smirnov@example.com"/>
+            <column name="phone" value="+7-999-555-66-77"/>
+            <column name="address" value="Новосибирск, ул. Красный проспект, д. 30"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="insert-test-pets" author="pet-project">
+        <!-- Питомцы для Ивана Иванова (owner_id = 1) -->
+        <insert tableName="pets">
+            <column name="name" value="Барсик"/>
+            <column name="type" value="CAT"/>
+            <column name="breed" value="Персидская"/>
+            <column name="date_of_birth" valueDate="2020-05-15"/>
+            <column name="color" value="Белый"/>
+            <column name="description" value="Дружелюбный и ласковый кот"/>
+            <column name="owner_id" valueNumeric="1"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="pets">
+            <column name="name" value="Рекс"/>
+            <column name="type" value="DOG"/>
+            <column name="breed" value="Немецкая овчарка"/>
+            <column name="date_of_birth" valueDate="2019-03-20"/>
+            <column name="color" value="Черно-рыжий"/>
+            <column name="description" value="Верный и умный пес"/>
+            <column name="owner_id" valueNumeric="1"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <!-- Питомцы для Марии Петровой (owner_id = 2) -->
+        <insert tableName="pets">
+            <column name="name" value="Мурка"/>
+            <column name="type" value="CAT"/>
+            <column name="breed" value="Британская короткошерстная"/>
+            <column name="date_of_birth" valueDate="2021-07-10"/>
+            <column name="color" value="Серый"/>
+            <column name="description" value="Спокойная и независимая"/>
+            <column name="owner_id" valueNumeric="2"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="pets">
+            <column name="name" value="Чижик"/>
+            <column name="type" value="BIRD"/>
+            <column name="breed" value="Канарейка"/>
+            <column name="date_of_birth" valueDate="2022-01-05"/>
+            <column name="color" value="Желтый"/>
+            <column name="description" value="Поет красивые песни"/>
+            <column name="owner_id" valueNumeric="2"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <!-- Питомцы для Александра Сидорова (owner_id = 3) -->
+        <insert tableName="pets">
+            <column name="name" value="Шарик"/>
+            <column name="type" value="DOG"/>
+            <column name="breed" value="Лабрадор"/>
+            <column name="date_of_birth" valueDate="2020-11-12"/>
+            <column name="color" value="Золотистый"/>
+            <column name="description" value="Очень активный и дружелюбный"/>
+            <column name="owner_id" valueNumeric="3"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="pets">
+            <column name="name" value="Немо"/>
+            <column name="type" value="FISH"/>
+            <column name="breed" value="Золотая рыбка"/>
+            <column name="date_of_birth" valueDate="2023-02-14"/>
+            <column name="color" value="Оранжевый"/>
+            <column name="description" value="Живет в большом аквариуме"/>
+            <column name="owner_id" valueNumeric="3"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <!-- Питомцы для Елены Козловой (owner_id = 4) -->
+        <insert tableName="pets">
+            <column name="name" value="Пушистик"/>
+            <column name="type" value="RABBIT"/>
+            <column name="breed" value="Ангорский кролик"/>
+            <column name="date_of_birth" valueDate="2022-06-20"/>
+            <column name="color" value="Белый"/>
+            <column name="description" value="Очень пушистый и милый"/>
+            <column name="owner_id" valueNumeric="4"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="pets">
+            <column name="name" value="Кеша"/>
+            <column name="type" value="BIRD"/>
+            <column name="breed" value="Волнистый попугай"/>
+            <column name="date_of_birth" valueDate="2021-09-15"/>
+            <column name="color" value="Зеленый"/>
+            <column name="description" value="Умеет говорить несколько слов"/>
+            <column name="owner_id" valueNumeric="4"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <!-- Питомцы для Дмитрия Смирнова (owner_id = 5) -->
+        <insert tableName="pets">
+            <column name="name" value="Бобик"/>
+            <column name="type" value="DOG"/>
+            <column name="breed" value="Дворняжка"/>
+            <column name="date_of_birth" valueDate="2018-08-25"/>
+            <column name="color" value="Рыжий"/>
+            <column name="description" value="Самый верный друг"/>
+            <column name="owner_id" valueNumeric="5"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="pets">
+            <column name="name" value="Хома"/>
+            <column name="type" value="HAMSTER"/>
+            <column name="breed" value="Сирийский хомяк"/>
+            <column name="date_of_birth" valueDate="2023-04-10"/>
+            <column name="color" value="Коричневый"/>
+            <column name="description" value="Любит бегать в колесе"/>
+            <column name="owner_id" valueNumeric="5"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <insert tableName="pets">
+            <column name="name" value="Васька"/>
+            <column name="type" value="CAT"/>
+            <column name="breed" value="Сибирская"/>
+            <column name="date_of_birth" valueDate="2020-12-01"/>
+            <column name="color" value="Серо-белый"/>
+            <column name="description" value="Любит охотиться на мышей"/>
+            <column name="owner_id" valueNumeric="5"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>
+

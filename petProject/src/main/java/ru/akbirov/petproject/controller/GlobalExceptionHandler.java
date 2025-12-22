@@ -1,0 +1,96 @@
+package ru.akbirov.petproject.controller;
+
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import ru.akbirov.petproject.dto.ErrorResponseDto;
+import ru.akbirov.petproject.exception.EmailAlreadyExistsException;
+import ru.akbirov.petproject.exception.OwnerNotFoundException;
+import ru.akbirov.petproject.exception.PetNotFoundException;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+    
+    @ExceptionHandler(OwnerNotFoundException.class)
+    public ResponseEntity<ErrorResponseDto> handleOwnerNotFoundException(
+            OwnerNotFoundException ex, HttpServletRequest request) {
+        log.error("Owner not found: {}", ex.getMessage());
+        ErrorResponseDto error = ErrorResponseDto.builder()
+                .message(ex.getMessage())
+                .error("Owner Not Found")
+                .timestamp(LocalDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+    
+    @ExceptionHandler(PetNotFoundException.class)
+    public ResponseEntity<ErrorResponseDto> handlePetNotFoundException(
+            PetNotFoundException ex, HttpServletRequest request) {
+        log.error("Pet not found: {}", ex.getMessage());
+        ErrorResponseDto error = ErrorResponseDto.builder()
+                .message(ex.getMessage())
+                .error("Pet Not Found")
+                .timestamp(LocalDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+    
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponseDto> handleEmailAlreadyExistsException(
+            EmailAlreadyExistsException ex, HttpServletRequest request) {
+        log.error("Email already exists: {}", ex.getMessage());
+        ErrorResponseDto error = ErrorResponseDto.builder()
+                .message(ex.getMessage())
+                .error("Email Already Exists")
+                .timestamp(LocalDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+    
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidationException(
+            MethodArgumentNotValidException ex, HttpServletRequest request) {
+        log.error("Validation error: {}", ex.getMessage());
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Validation failed");
+        response.put("errors", errors);
+        response.put("timestamp", LocalDateTime.now());
+        response.put("path", request.getRequestURI());
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+    
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponseDto> handleGenericException(
+            Exception ex, HttpServletRequest request) {
+        log.error("Unexpected error: ", ex);
+        ErrorResponseDto error = ErrorResponseDto.builder()
+                .message("Internal server error")
+                .error(ex.getClass().getSimpleName())
+                .timestamp(LocalDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+}
+

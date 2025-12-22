@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="add-indexes" author="pet-project">
+        <createIndex indexName="idx_owners_email" tableName="owners">
+            <column name="email"/>
+        </createIndex>
+        
+        <createIndex indexName="idx_pets_owner_id" tableName="pets">
+            <column name="owner_id"/>
+        </createIndex>
+        
+        <createIndex indexName="idx_pets_type" tableName="pets">
+            <column name="type"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+
