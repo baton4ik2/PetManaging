@@ -1,9 +1,0 @@
-# Игнорировать все
-*
-
-# Но не игнорировать папку petProject
-!petProject/
-
-# И не игнорировать сам .gitignore
-!.gitignore
-
