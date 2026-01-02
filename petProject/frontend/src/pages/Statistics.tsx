@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { statisticsService } from '../services/api';
 import type { Statistics } from '../services/api';
 
@@ -13,6 +14,7 @@ const typeEmojis: Record<string, string> = {
 };
 
 function StatisticsPage() {
+  const navigate = useNavigate();
   const [statistics, setStatistics] = useState<Statistics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +91,8 @@ function StatisticsPage() {
           {Object.entries(statistics.petsByType).map(([type, count]) => (
             <div
               key={type}
-              className="p-4 border border-gray-200 rounded-lg text-center"
+              onClick={() => navigate(`/pets?type=${type}`)}
+              className="p-4 border border-gray-200 rounded-lg text-center cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
             >
               <div className="text-3xl mb-2">{typeEmojis[type] || '🐾'}</div>
               <div className="text-xl font-bold text-gray-900">{count}</div>

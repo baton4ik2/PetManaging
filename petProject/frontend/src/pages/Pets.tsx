@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { petService, ownerService } from '../services/api';
 import type { Pet, Owner } from '../services/api';
 import PetForm from '../components/PetForm';
@@ -7,6 +8,11 @@ import { useAuth } from '../contexts/AuthContext';
 
 function Pets() {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Инициализируем filterType из URL параметра сразу
+  const [filterType, setFilterType] = useState<string>(() => {
+    return searchParams.get('type') || '';
+  });
   const [pets, setPets] = useState<Pet[]>([]);
   const [filteredPets, setFilteredPets] = useState<Pet[]>([]);
   const [owners, setOwners] = useState<Owner[]>([]);
@@ -14,7 +20,6 @@ function Pets() {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingPet, setEditingPet] = useState<Pet | null>(null);
-  const [filterType, setFilterType] = useState<string>('');
   const [filterOwnerId, setFilterOwnerId] = useState<number | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'all' | 'my'>('all');
@@ -24,17 +29,26 @@ function Pets() {
   
   const isAdmin = user?.roles?.includes('ADMIN') || false;
 
+  // Синхронизируем filterType с URL параметром при изменении URL
+  useEffect(() => {
+    const typeParam = searchParams.get('type') || '';
+    setFilterType(typeParam);
+  }, [searchParams]);
+
   const loadPets = useCallback(async (search?: string) => {
     try {
       setLoading(true);
+      // Читаем актуальное значение filterType из URL параметров (приоритет URL)
+      const urlType = searchParams.get('type') || '';
+      const currentFilterType = urlType || filterType;
       let response;
       if (viewMode === 'my') {
         // Загружаем только своих питомцев
         response = await petService.getMyPets();
         // Применяем фильтры на клиенте для своих питомцев
         let allPets = response.data;
-        if (filterType) {
-          allPets = allPets.filter(pet => pet.type === filterType);
+        if (currentFilterType) {
+          allPets = allPets.filter(pet => pet.type === currentFilterType);
         }
         setPets(allPets);
         
@@ -53,7 +67,7 @@ function Pets() {
       } else {
         // Загружаем всех питомцев с фильтрами
         response = await petService.getAll(
-          filterType || undefined,
+          currentFilterType || undefined,
           filterOwnerId,
           search?.trim() || undefined
         );
@@ -79,7 +93,7 @@ function Pets() {
     } finally {
       setLoading(false);
     }
-  }, [viewMode, filterType, filterOwnerId]);
+  }, [viewMode, filterType, filterOwnerId, searchParams]);
 
   const loadOwners = useCallback(async () => {
     try {
@@ -91,12 +105,14 @@ function Pets() {
   }, []);
 
   // Initial load and when filters change (except search)
+  // Используем значение из URL напрямую для отслеживания изменений
+  const urlType = searchParams.get('type') || '';
   useEffect(() => {
     loadPets();
     if (viewMode === 'all') {
       loadOwners();
     }
-  }, [filterType, filterOwnerId, viewMode, loadPets, loadOwners]);
+  }, [urlType, filterType, filterOwnerId, viewMode, loadPets, loadOwners]);
 
   // Update filtered pets when pets change
   useEffect(() => {
@@ -273,7 +289,15 @@ function Pets() {
             </label>
             <select
               value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
+              onChange={(e) => {
+                setFilterType(e.target.value);
+                // Обновляем URL параметр
+                if (e.target.value) {
+                  setSearchParams({ type: e.target.value });
+                } else {
+                  setSearchParams({});
+                }
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             >
               <option value="">All Types</option>
