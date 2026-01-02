@@ -8,10 +8,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 import ru.akbirov.petproject.dto.PetRequestDto;
 import ru.akbirov.petproject.dto.PetResponseDto;
 import ru.akbirov.petproject.entity.PetType;
+import ru.akbirov.petproject.exception.AccessDeniedException;
 import ru.akbirov.petproject.service.PetService;
 
 import java.util.List;
@@ -78,7 +81,9 @@ public class PetController {
     @Operation(summary = "Обновить питомца")
     public ResponseEntity<PetResponseDto> updatePet(
             @PathVariable Long id,
-            @Valid @RequestBody PetRequestDto requestDto) {
+            @Valid @RequestBody PetRequestDto requestDto,
+            Authentication authentication) {
+        checkAdminAccess(authentication);
         logger.info("Updating pet with ID: {}", id);
         PetResponseDto response = petService.updatePet(id, requestDto);
         logger.info("Pet updated successfully: {} (ID: {})", response.getName(), response.getId());
@@ -87,11 +92,29 @@ public class PetController {
     
     @DeleteMapping("/{id}")
     @Operation(summary = "Удалить питомца")
-    public ResponseEntity<Void> deletePet(@PathVariable Long id) {
+    public ResponseEntity<Void> deletePet(
+            @PathVariable Long id,
+            Authentication authentication) {
+        checkAdminAccess(authentication);
         logger.info("Deleting pet with ID: {}", id);
         petService.deletePet(id);
         logger.info("Pet deleted successfully with ID: {}", id);
         return ResponseEntity.noContent().build();
+    }
+    
+    private void checkAdminAccess(Authentication authentication) {
+        if (authentication == null) {
+            throw new AccessDeniedException("Authentication required");
+        }
+        
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
+        
+        if (!isAdmin) {
+            logger.warn("Access denied for user: {} - ADMIN role required", authentication.getName());
+            throw new AccessDeniedException("Access denied. ADMIN role required.");
+        }
     }
 }
 

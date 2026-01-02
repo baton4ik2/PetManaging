@@ -3,8 +3,10 @@ import { petService, ownerService } from '../services/api';
 import type { Pet, Owner } from '../services/api';
 import PetForm from '../components/PetForm';
 import PetList from '../components/PetList';
+import { useAuth } from '../contexts/AuthContext';
 
 function Pets() {
+  const { user } = useAuth();
   const [pets, setPets] = useState<Pet[]>([]);
   const [owners, setOwners] = useState<Owner[]>([]);
   const [loading, setLoading] = useState(true);
@@ -14,6 +16,8 @@ function Pets() {
   const [filterType, setFilterType] = useState<string>('');
   const [filterOwnerId, setFilterOwnerId] = useState<number | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
+  
+  const isAdmin = user?.roles?.includes('ADMIN') || false;
 
   useEffect(() => {
     loadPets();
@@ -181,6 +185,7 @@ function Pets() {
         pets={pets}
         onEdit={setEditingPet}
         onDelete={handleDelete}
+        isAdmin={isAdmin}
       />
     </div>
   );
