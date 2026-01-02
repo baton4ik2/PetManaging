@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
+import { userService } from '../services/authService';
 
 interface UserProfile {
   id: number;
@@ -37,7 +38,7 @@ function Profile() {
   const loadProfile = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get<UserProfile>('/users/me');
+      const response = await userService.getProfile();
       setProfile(response.data);
       setEmail(response.data.email);
     } catch (err: any) {

@@ -19,6 +19,12 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // Добавляем данные пользователя в заголовки для профиля
+    const user = authService.getUser();
+    if (user) {
+      config.headers['X-Username'] = user.username;
+      config.headers['X-Email'] = user.email;
+    }
     return config;
   },
   (error) => {

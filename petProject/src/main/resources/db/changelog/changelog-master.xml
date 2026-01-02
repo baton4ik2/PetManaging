@@ -5,11 +5,9 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
-    <include file="db/changelog/1.0/create-users-table.xml"/>
     <include file="db/changelog/1.0/create-owners-table.xml"/>
     <include file="db/changelog/1.0/create-pets-table.xml"/>
     <include file="db/changelog/1.0/add-indexes.xml"/>
-    <include file="db/changelog/1.0/insert-test-admin.xml"/>
     <include file="db/changelog/1.0/insert-test-data.xml"/>
 
 </databaseChangeLog>

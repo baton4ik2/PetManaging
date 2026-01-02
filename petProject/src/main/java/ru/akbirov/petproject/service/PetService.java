@@ -1,6 +1,8 @@
 package ru.akbirov.petproject.service;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.akbirov.petproject.dto.PetRequestDto;
@@ -21,57 +23,86 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PetService {
     
+    private static final Logger logger = LoggerFactory.getLogger(PetService.class);
     private final PetRepository petRepository;
     private final OwnerRepository ownerRepository;
     private final PetMapper petMapper;
     
     @Transactional
     public PetResponseDto createPet(PetRequestDto requestDto) {
+        logger.debug("Creating pet: {} (type: {}, ownerId: {})", 
+                requestDto.getName(), requestDto.getType(), requestDto.getOwnerId());
         Owner owner = ownerRepository.findById(requestDto.getOwnerId())
-                .orElseThrow(() -> new OwnerNotFoundException(requestDto.getOwnerId()));
+                .orElseThrow(() -> {
+                    logger.warn("Owner not found with ID: {}", requestDto.getOwnerId());
+                    return new OwnerNotFoundException(requestDto.getOwnerId());
+                });
         
         Pet pet = petMapper.toEntity(requestDto);
         pet.setOwner(owner);
         
         Pet savedPet = petRepository.save(pet);
+        logger.info("Pet created successfully with ID: {}, name: {}, ownerId: {}", 
+                savedPet.getId(), savedPet.getName(), savedPet.getOwner().getId());
         return petMapper.toResponseDto(savedPet);
     }
     
     @Transactional(readOnly = true)
     public PetResponseDto getPetById(Long id) {
+        logger.debug("Getting pet by ID: {}", id);
         Pet pet = petRepository.findById(id)
-                .orElseThrow(() -> new PetNotFoundException(id));
+                .orElseThrow(() -> {
+                    logger.warn("Pet not found with ID: {}", id);
+                    return new PetNotFoundException(id);
+                });
+        logger.debug("Pet retrieved: {} (ID: {})", pet.getName(), pet.getId());
         return petMapper.toResponseDto(pet);
     }
     
     @Transactional(readOnly = true)
     public List<PetResponseDto> getAllPets() {
-        return petRepository.findAll().stream()
+        logger.debug("Getting all pets");
+        List<PetResponseDto> pets = petRepository.findAll().stream()
                 .map(petMapper::toResponseDto)
                 .collect(Collectors.toList());
+        logger.debug("Retrieved {} pets", pets.size());
+        return pets;
     }
     
     @Transactional(readOnly = true)
     public List<PetResponseDto> getPetsByType(PetType type) {
-        return petRepository.findByType(type).stream()
+        logger.debug("Getting pets by type: {}", type);
+        List<PetResponseDto> pets = petRepository.findByType(type).stream()
                 .map(petMapper::toResponseDto)
                 .collect(Collectors.toList());
+        logger.debug("Found {} pets of type: {}", pets.size(), type);
+        return pets;
     }
     
     @Transactional(readOnly = true)
     public List<PetResponseDto> getPetsByOwnerId(Long ownerId) {
-        return petRepository.findByOwnerId(ownerId).stream()
+        logger.debug("Getting pets by owner ID: {}", ownerId);
+        List<PetResponseDto> pets = petRepository.findByOwnerId(ownerId).stream()
                 .map(petMapper::toResponseDto)
                 .collect(Collectors.toList());
+        logger.debug("Found {} pets for owner ID: {}", pets.size(), ownerId);
+        return pets;
     }
     
     @Transactional
     public PetResponseDto updatePet(Long id, PetRequestDto requestDto) {
+        logger.debug("Updating pet with ID: {}", id);
         Pet pet = petRepository.findById(id)
-                .orElseThrow(() -> new PetNotFoundException(id));
+                .orElseThrow(() -> {
+                    logger.warn("Pet not found with ID: {}", id);
+                    return new PetNotFoundException(id);
+                });
         
         Owner owner = ownerRepository.findById(requestDto.getOwnerId())
-                .orElseThrow(() -> new OwnerNotFoundException(requestDto.getOwnerId()));
+                .orElseThrow(() -> {
+                    logger.warn("Owner not found with ID: {}", requestDto.getOwnerId());
+                    return new OwnerNotFoundException(requestDto.getOwnerId());
+                });
         
         pet.setName(requestDto.getName());
         pet.setType(requestDto.getType());
@@ -82,22 +113,29 @@ public class PetService {
         pet.setOwner(owner);
         
         Pet updatedPet = petRepository.save(pet);
+        logger.info("Pet updated successfully: {} (ID: {})", updatedPet.getName(), updatedPet.getId());
         return petMapper.toResponseDto(updatedPet);
     }
     
     @Transactional
     public void deletePet(Long id) {
+        logger.debug("Deleting pet with ID: {}", id);
         if (!petRepository.existsById(id)) {
+            logger.warn("Pet not found with ID: {}", id);
             throw new PetNotFoundException(id);
         }
         petRepository.deleteById(id);
+        logger.info("Pet deleted successfully with ID: {}", id);
     }
     
     @Transactional(readOnly = true)
     public List<PetResponseDto> search(String searchTerm) {
-        return petRepository.search(searchTerm).stream()
+        logger.debug("Searching pets with term: {}", searchTerm);
+        List<PetResponseDto> pets = petRepository.search(searchTerm).stream()
                 .map(petMapper::toResponseDto)
                 .collect(Collectors.toList());
+        logger.debug("Found {} pets matching search term: {}", pets.size(), searchTerm);
+        return pets;
     }
 }
 

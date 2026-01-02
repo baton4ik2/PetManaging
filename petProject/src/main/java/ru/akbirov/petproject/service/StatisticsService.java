@@ -1,6 +1,8 @@
 package ru.akbirov.petproject.service;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.akbirov.petproject.dto.StatisticsDto;
@@ -16,11 +18,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class StatisticsService {
     
+    private static final Logger logger = LoggerFactory.getLogger(StatisticsService.class);
     private final OwnerRepository ownerRepository;
     private final PetRepository petRepository;
     
     @Transactional(readOnly = true)
     public StatisticsDto getStatistics() {
+        logger.debug("Calculating statistics");
         long totalOwners = ownerRepository.count();
         long totalPets = petRepository.count();
         
@@ -31,6 +35,9 @@ public class StatisticsService {
                 ));
         
         long averagePetsPerOwner = totalOwners > 0 ? totalPets / totalOwners : 0;
+        
+        logger.debug("Statistics calculated: totalOwners={}, totalPets={}, averagePetsPerOwner={}", 
+                totalOwners, totalPets, averagePetsPerOwner);
         
         return StatisticsDto.builder()
                 .totalOwners(totalOwners)

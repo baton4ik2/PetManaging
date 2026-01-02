@@ -83,7 +83,14 @@ export interface UserProfile {
 }
 
 export const userService = {
-  getProfile: () => api.get<UserProfile>('/users/me'),
+  getProfile: () => {
+    // Передаем данные пользователя через query параметры, так как заголовки могут не проходить через nginx
+    const user = authService.getUser();
+    if (user) {
+      return api.get<UserProfile>(`/users/me?username=${encodeURIComponent(user.username)}&email=${encodeURIComponent(user.email)}`);
+    }
+    return api.get<UserProfile>('/users/me');
+  },
   updateProfile: (email: string) => api.put<UserProfile>('/users/me', { email }),
   changePassword: (currentPassword: string, newPassword: string) =>
     api.put('/users/me/password', { currentPassword, newPassword }),

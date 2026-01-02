@@ -21,7 +21,8 @@ public class CorsConfig {
             "http://frontend:80"  // Docker internal network
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setExposedHeaders(Arrays.asList("X-Username", "X-Email"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
         
