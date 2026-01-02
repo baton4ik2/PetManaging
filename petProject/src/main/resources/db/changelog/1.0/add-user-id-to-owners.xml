@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="add-user-id-to-owners" author="pet-project">
+        <addColumn tableName="owners">
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        
+        <addForeignKeyConstraint
+                baseTableName="owners"
+                baseColumnNames="user_id"
+                constraintName="fk_owners_user"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                onDelete="SET NULL"/>
+        
+        <createIndex tableName="owners" indexName="idx_owners_user_id">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+

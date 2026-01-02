@@ -10,6 +10,7 @@
     <include file="db/changelog/1.0/create-pets-table.xml"/>
     <include file="db/changelog/1.0/add-indexes.xml"/>
     <include file="db/changelog/1.0/insert-test-data.xml"/>
+    <include file="db/changelog/1.0/add-user-id-to-owners.xml"/>
 
 </databaseChangeLog>
 

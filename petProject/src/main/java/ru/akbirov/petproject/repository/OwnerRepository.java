@@ -21,5 +21,7 @@ public interface OwnerRepository extends JpaRepository<Owner, Long> {
            "OR LOWER(o.lastName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
            "OR LOWER(o.email) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
     List<Owner> search(@Param("searchTerm") String searchTerm);
+    
+    Optional<Owner> findByUserId(Long userId);
 }
 
