@@ -2,62 +2,43 @@ package ru.akbirov.petproject.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.Data;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.akbirov.petproject.util.RoleUtils;
-
-import java.util.HashMap;
-import java.util.Map;
+import ru.akbirov.petproject.dto.AuthResponseDto;
+import ru.akbirov.petproject.dto.LoginDto;
+import ru.akbirov.petproject.dto.RegisterDto;
+import ru.akbirov.petproject.service.AuthService;
 
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 @Tag(name = "Authentication", description = "API для аутентификации")
 public class AuthController {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+    private final AuthService authService;
 
     @PostMapping("/register")
     @Operation(summary = "Регистрация нового пользователя")
-    public ResponseEntity<Map<String, Object>> register(@RequestBody RegisterRequest request) {
-        logger.info("Registration attempt for username: {}", request.getUsername());
-        // Простая заглушка для совместимости с фронтендом
-        Map<String, Object> response = new HashMap<>();
-        response.put("token", "dummy-token-" + System.currentTimeMillis());
-        response.put("username", request.getUsername());
-        response.put("email", request.getEmail());
-        response.put("roles", RoleUtils.removeRolePrefix(new String[]{"ROLE_USER"}));
-        logger.info("User registered successfully: username={}, email={}", request.getUsername(), request.getEmail());
+    public ResponseEntity<AuthResponseDto> register(@Valid @RequestBody RegisterDto registerDto) {
+        logger.info("Registration attempt for username: {}", registerDto.getUsername());
+        AuthResponseDto response = authService.register(registerDto);
+        logger.info("User registered successfully: username={}, email={}", 
+                response.getUsername(), response.getEmail());
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/login")
     @Operation(summary = "Вход в систему")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequest request) {
-        logger.info("Login attempt for username: {}", request.getUsername());
-        // Простая заглушка для совместимости с фронтендом
-        Map<String, Object> response = new HashMap<>();
-        response.put("token", "dummy-token-" + System.currentTimeMillis());
-        response.put("username", request.getUsername());
-        response.put("email", request.getUsername() + "@example.com");
-        response.put("roles", RoleUtils.removeRolePrefix(new String[]{"ROLE_USER"}));
-        logger.info("User logged in successfully: username={}", request.getUsername());
+    public ResponseEntity<AuthResponseDto> login(@Valid @RequestBody LoginDto loginDto) {
+        logger.info("Login attempt for username: {}", loginDto.getUsername());
+        AuthResponseDto response = authService.login(loginDto);
+        logger.info("User logged in successfully: username={}, email={}", 
+                response.getUsername(), response.getEmail());
         return ResponseEntity.ok(response);
     }
-
-    @Data
-    public static class RegisterRequest {
-        private String username;
-        private String email;
-        private String password;
-    }
-
-    @Data
-    public static class LoginRequest {
-        private String username;
-        private String password;
-    }
 }
-

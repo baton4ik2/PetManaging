@@ -14,7 +14,7 @@ interface UserProfile {
 }
 
 function Profile() {
-  const { updateUser } = useAuth();
+  const { user, updateUser } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [email, setEmail] = useState('');
@@ -39,10 +39,66 @@ function Profile() {
     try {
       setIsLoading(true);
       const response = await userService.getProfile();
-      setProfile(response.data);
-      setEmail(response.data.email);
+      // Если данные из ответа неполные, используем данные из AuthContext или localStorage
+      const profileData = response.data;
+      
+      // Проверяем localStorage напрямую для получения правильного email
+      const storedUserStr = localStorage.getItem('auth_user');
+      let storedUser = null;
+      if (storedUserStr) {
+        try {
+          storedUser = JSON.parse(storedUserStr);
+        } catch (e) {
+          // ignore
+        }
+      }
+      
+      if (user && (!profileData.username || profileData.username === 'user')) {
+        profileData.username = user.username;
+      }
+      
+      // Используем email из localStorage, если он не содержит '@example.com'
+      if (storedUser && storedUser.email && !storedUser.email.includes('@example.com')) {
+        profileData.email = storedUser.email;
+      } else if (user && (!profileData.email || profileData.email.includes('@example.com'))) {
+        // Если в localStorage нет правильного email, используем из AuthContext
+        if (user.email && !user.email.includes('@example.com')) {
+          profileData.email = user.email;
+        }
+      }
+      
+      setProfile(profileData);
+      setEmail(profileData.email);
     } catch (err: any) {
       setError('Failed to load profile');
+      // Если запрос не удался, используем данные из AuthContext или localStorage
+      const storedUserStr = localStorage.getItem('auth_user');
+      let storedUser = null;
+      if (storedUserStr) {
+        try {
+          storedUser = JSON.parse(storedUserStr);
+        } catch (e) {
+          // ignore
+        }
+      }
+      
+      if (user || storedUser) {
+        const fallbackProfile: UserProfile = {
+          id: 1,
+          username: (user || storedUser)?.username || 'user',
+          email: (storedUser?.email && !storedUser.email.includes('@example.com')) 
+            ? storedUser.email 
+            : (user?.email && !user.email.includes('@example.com'))
+              ? user.email
+              : (user || storedUser)?.email || 'user@example.com',
+          roles: (user || storedUser)?.roles || ['USER'],
+          enabled: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        setProfile(fallbackProfile);
+        setEmail(fallbackProfile.email);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -57,12 +113,15 @@ function Profile() {
     try {
       const response = await api.put<UserProfile>('/users/me', { email });
       setProfile(response.data);
-      // Update auth context
-      updateUser({
+      // Update auth context and localStorage
+      const updatedUser = {
         username: response.data.username,
         email: response.data.email,
         roles: response.data.roles,
-      });
+      };
+      updateUser(updatedUser);
+      // Также обновляем localStorage напрямую, чтобы email сохранился
+      localStorage.setItem('auth_user', JSON.stringify(updatedUser));
       setSuccess('Profile updated successfully');
       setIsEditing(false);
     } catch (err: any) {

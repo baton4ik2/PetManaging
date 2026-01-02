@@ -26,13 +26,24 @@ export const authService = {
     const response = await api.post<AuthResponse>('/auth/login', credentials);
     if (response.data.token) {
       localStorage.setItem(TOKEN_KEY, response.data.token);
+      // Если email из ответа содержит '@example.com', используем существующий email из localStorage
+      // (если username совпадает и существующий email НЕ содержит '@example.com'), иначе используем email из ответа
+      const existingUser = authService.getUser();
+      let email = response.data.email;
+      if (email.includes('@example.com') && existingUser && existingUser.username === response.data.username) {
+        // Используем существующий email, если он не содержит '@example.com' (т.е. это реальный email)
+        if (!existingUser.email.includes('@example.com')) {
+          email = existingUser.email;
+        }
+      }
       localStorage.setItem(USER_KEY, JSON.stringify({
         username: response.data.username,
-        email: response.data.email,
+        email: email,
         roles: response.data.roles,
       }));
     }
-    return response.data;
+    const savedUser = authService.getUser();
+    return { ...response.data, email: savedUser?.email || response.data.email };
   },
 
   register: async (data: RegisterRequest): Promise<AuthResponse> => {
@@ -70,6 +81,13 @@ export const authService = {
   isAuthenticated: (): boolean => {
     return !!authService.getToken();
   },
+
+  clearAllUsers: () => {
+    // Очищает всех пользователей из localStorage
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    console.log('All users cleared from localStorage');
+  },
 };
 
 export interface UserProfile {
@@ -86,9 +104,12 @@ export const userService = {
   getProfile: () => {
     // Передаем данные пользователя через query параметры, так как заголовки могут не проходить через nginx
     const user = authService.getUser();
-    if (user) {
-      return api.get<UserProfile>(`/users/me?username=${encodeURIComponent(user.username)}&email=${encodeURIComponent(user.email)}`);
+    if (user && user.username && user.email) {
+      const url = `/users/me?username=${encodeURIComponent(user.username)}&email=${encodeURIComponent(user.email)}`;
+      console.log('Loading profile with:', { username: user.username, email: user.email });
+      return api.get<UserProfile>(url);
     }
+    console.warn('No user data in localStorage, using default');
     return api.get<UserProfile>('/users/me');
   },
   updateProfile: (email: string) => api.put<UserProfile>('/users/me', { email }),

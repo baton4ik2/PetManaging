@@ -13,6 +13,8 @@ import ru.akbirov.petproject.dto.ErrorResponseDto;
 import ru.akbirov.petproject.exception.EmailAlreadyExistsException;
 import ru.akbirov.petproject.exception.OwnerNotFoundException;
 import ru.akbirov.petproject.exception.PetNotFoundException;
+import ru.akbirov.petproject.exception.UserNotFoundException;
+import ru.akbirov.petproject.exception.UsernameAlreadyExistsException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -59,6 +61,32 @@ public class GlobalExceptionHandler {
                 .path(request.getRequestURI())
                 .build();
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+    
+    @ExceptionHandler(UsernameAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponseDto> handleUsernameAlreadyExistsException(
+            UsernameAlreadyExistsException ex, HttpServletRequest request) {
+        log.error("Username already exists: {}", ex.getMessage());
+        ErrorResponseDto error = ErrorResponseDto.builder()
+                .message(ex.getMessage())
+                .error("Username Already Exists")
+                .timestamp(LocalDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+    
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponseDto> handleUserNotFoundException(
+            UserNotFoundException ex, HttpServletRequest request) {
+        log.error("User not found: {}", ex.getMessage());
+        ErrorResponseDto error = ErrorResponseDto.builder()
+                .message(ex.getMessage())
+                .error("User Not Found")
+                .timestamp(LocalDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
     
     @ExceptionHandler(BadCredentialsException.class)
