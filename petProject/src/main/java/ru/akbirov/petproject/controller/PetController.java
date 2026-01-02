@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import ru.akbirov.petproject.dto.PetRequestDto;
 import ru.akbirov.petproject.dto.PetResponseDto;
@@ -44,6 +45,22 @@ public class PetController {
         logger.debug("Getting pet by ID: {}", id);
         PetResponseDto response = petService.getPetById(id);
         logger.debug("Pet retrieved: {} (ID: {})", response.getName(), response.getId());
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/my")
+    @Operation(summary = "Получить питомцев текущего пользователя")
+    public ResponseEntity<List<PetResponseDto>> getMyPets() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || 
+            authentication.getName().equals("anonymousUser")) {
+            logger.warn("Authentication required for getting my pets. Current auth: {}", authentication);
+            throw new AccessDeniedException("Authentication required");
+        }
+        String username = authentication.getName();
+        logger.debug("Getting pets for current user: {}", username);
+        List<PetResponseDto> response = petService.getMyPets(username);
+        logger.debug("Found {} pets for user: {}", response.size(), username);
         return ResponseEntity.ok(response);
     }
     
@@ -83,7 +100,7 @@ public class PetController {
             @PathVariable Long id,
             @Valid @RequestBody PetRequestDto requestDto,
             Authentication authentication) {
-        checkAdminAccess(authentication);
+        checkPetAccess(id, authentication);
         logger.info("Updating pet with ID: {}", id);
         PetResponseDto response = petService.updatePet(id, requestDto);
         logger.info("Pet updated successfully: {} (ID: {})", response.getName(), response.getId());
@@ -95,15 +112,15 @@ public class PetController {
     public ResponseEntity<Void> deletePet(
             @PathVariable Long id,
             Authentication authentication) {
-        checkAdminAccess(authentication);
+        checkPetAccess(id, authentication);
         logger.info("Deleting pet with ID: {}", id);
         petService.deletePet(id);
         logger.info("Pet deleted successfully with ID: {}", id);
         return ResponseEntity.noContent().build();
     }
     
-    private void checkAdminAccess(Authentication authentication) {
-        if (authentication == null) {
+    private void checkPetAccess(Long petId, Authentication authentication) {
+        if (authentication == null || authentication.getName().equals("anonymousUser")) {
             throw new AccessDeniedException("Authentication required");
         }
         
@@ -111,10 +128,19 @@ public class PetController {
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
         
-        if (!isAdmin) {
-            logger.warn("Access denied for user: {} - ADMIN role required", authentication.getName());
-            throw new AccessDeniedException("Access denied. ADMIN role required.");
+        if (isAdmin) {
+            logger.debug("Admin access granted for pet {}", petId);
+            return;
         }
+        
+        // Проверяем, является ли пользователь владельцем питомца
+        boolean isOwner = petService.isPetOwner(petId, authentication.getName());
+        if (!isOwner) {
+            logger.warn("Access denied for user: {} - not owner of pet {}", authentication.getName(), petId);
+            throw new AccessDeniedException("Access denied. You can only edit/delete your own pets.");
+        }
+        
+        logger.debug("Owner access granted for pet {}", petId);
     }
 }
 

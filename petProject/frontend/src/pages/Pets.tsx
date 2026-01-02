@@ -16,23 +16,47 @@ function Pets() {
   const [filterType, setFilterType] = useState<string>('');
   const [filterOwnerId, setFilterOwnerId] = useState<number | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<'all' | 'my'>('all');
   
   const isAdmin = user?.roles?.includes('ADMIN') || false;
 
   useEffect(() => {
     loadPets();
-    loadOwners();
-  }, [filterType, filterOwnerId, searchTerm]);
+    if (viewMode === 'all') {
+      loadOwners();
+    }
+  }, [filterType, filterOwnerId, searchTerm, viewMode]);
 
   const loadPets = async () => {
     try {
       setLoading(true);
-      const response = await petService.getAll(
-        filterType || undefined,
-        filterOwnerId,
-        searchTerm.trim() || undefined
-      );
-      setPets(response.data);
+      let response;
+      if (viewMode === 'my') {
+        // Загружаем только своих питомцев
+        response = await petService.getMyPets();
+        // Применяем фильтры на клиенте для своих питомцев
+        let filteredPets = response.data;
+        if (filterType) {
+          filteredPets = filteredPets.filter(pet => pet.type === filterType);
+        }
+        if (searchTerm.trim()) {
+          const search = searchTerm.trim().toLowerCase();
+          filteredPets = filteredPets.filter(pet => 
+            pet.name.toLowerCase().includes(search) ||
+            pet.breed.toLowerCase().includes(search) ||
+            pet.ownerName?.toLowerCase().includes(search)
+          );
+        }
+        setPets(filteredPets);
+      } else {
+        // Загружаем всех питомцев с фильтрами
+        response = await petService.getAll(
+          filterType || undefined,
+          filterOwnerId,
+          searchTerm.trim() || undefined
+        );
+        setPets(response.data);
+      }
       setError(null);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load pets');
@@ -96,15 +120,39 @@ function Pets() {
     <div className="px-4 py-6 sm:px-0">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Pets</h1>
-        <button
-          onClick={() => {
-            setEditingPet(null);
-            setShowForm(true);
-          }}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-        >
-          + Add Pet
-        </button>
+        <div className="flex items-center gap-4">
+          <div className="flex bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('all')}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                viewMode === 'all'
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Все питомцы
+            </button>
+            <button
+              onClick={() => setViewMode('my')}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                viewMode === 'my'
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Мои питомцы
+            </button>
+          </div>
+          <button
+            onClick={() => {
+              setEditingPet(null);
+              setShowForm(true);
+            }}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+          >
+            + Add Pet
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -143,23 +191,25 @@ function Pets() {
               <option value="OTHER">Other</option>
             </select>
           </div>
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Filter by Owner
-            </label>
-            <select
-              value={filterOwnerId || ''}
-              onChange={(e) => setFilterOwnerId(e.target.value ? Number(e.target.value) : undefined)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-            >
-              <option value="">All Owners</option>
-              {owners.map((owner) => (
-                <option key={owner.id} value={owner.id}>
-                  {owner.firstName} {owner.lastName}
-                </option>
-              ))}
-            </select>
-          </div>
+          {viewMode === 'all' && (
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Filter by Owner
+              </label>
+              <select
+                value={filterOwnerId || ''}
+                onChange={(e) => setFilterOwnerId(e.target.value ? Number(e.target.value) : undefined)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="">All Owners</option>
+                {owners.map((owner) => (
+                  <option key={owner.id} value={owner.id}>
+                    {owner.firstName} {owner.lastName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
       </div>
 
@@ -186,6 +236,7 @@ function Pets() {
         onEdit={setEditingPet}
         onDelete={handleDelete}
         isAdmin={isAdmin}
+        canEditDelete={viewMode === 'my'} // В режиме "Мои питомцы" показываем кнопки Edit/Delete
       />
     </div>
   );

@@ -102,6 +102,7 @@ export const petService = {
     if (search) params.append('search', search);
     return api.get<Pet[]>(`/pets?${params.toString()}`);
   },
+  getMyPets: () => api.get<Pet[]>('/pets/my'),
   getById: (id: number) => api.get<Pet>(`/pets/${id}`),
   create: (pet: Omit<Pet, 'id' | 'createdAt' | 'updatedAt' | 'ownerName'>) => 
     api.post<Pet>('/pets', pet),

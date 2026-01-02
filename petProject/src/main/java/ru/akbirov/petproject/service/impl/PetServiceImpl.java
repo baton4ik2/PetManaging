@@ -10,11 +10,14 @@ import ru.akbirov.petproject.dto.PetResponseDto;
 import ru.akbirov.petproject.entity.Owner;
 import ru.akbirov.petproject.entity.Pet;
 import ru.akbirov.petproject.entity.PetType;
+import ru.akbirov.petproject.entity.User;
 import ru.akbirov.petproject.exception.OwnerNotFoundException;
 import ru.akbirov.petproject.exception.PetNotFoundException;
+import ru.akbirov.petproject.exception.UserNotFoundException;
 import ru.akbirov.petproject.mapper.PetMapper;
 import ru.akbirov.petproject.repository.OwnerRepository;
 import ru.akbirov.petproject.repository.PetRepository;
+import ru.akbirov.petproject.repository.UserRepository;
 import ru.akbirov.petproject.service.PetService;
 
 import java.util.List;
@@ -27,6 +30,7 @@ public class PetServiceImpl implements PetService {
     private static final Logger logger = LoggerFactory.getLogger(PetServiceImpl.class);
     private final PetRepository petRepository;
     private final OwnerRepository ownerRepository;
+    private final UserRepository userRepository;
     private final PetMapper petMapper;
     
     @Override
@@ -145,6 +149,58 @@ public class PetServiceImpl implements PetService {
                 .collect(Collectors.toList());
         logger.debug("Found {} pets matching search term: {}", pets.size(), searchTerm);
         return pets;
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<PetResponseDto> getMyPets(String username) {
+        logger.debug("Getting pets for user: {}", username);
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> {
+                    logger.warn("User not found with username: {}", username);
+                    return new UserNotFoundException("User not found with username: " + username);
+                });
+        
+        Owner owner = ownerRepository.findByUserId(user.getId())
+                .orElseThrow(() -> {
+                    logger.warn("Owner not found for user ID: {}", user.getId());
+                    return new OwnerNotFoundException("Owner not found for user: " + username);
+                });
+        
+        List<PetResponseDto> pets = petRepository.findByOwnerId(owner.getId()).stream()
+                .map(petMapper::toResponseDto)
+                .collect(Collectors.toList());
+        logger.debug("Found {} pets for user: {}", pets.size(), username);
+        return pets;
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isPetOwner(Long petId, String username) {
+        logger.debug("Checking if user {} is owner of pet {}", username, petId);
+        Pet pet = petRepository.findById(petId)
+                .orElseThrow(() -> {
+                    logger.warn("Pet not found with ID: {}", petId);
+                    return new PetNotFoundException(petId);
+                });
+        
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> {
+                    logger.warn("User not found with username: {}", username);
+                    return new UserNotFoundException("User not found with username: " + username);
+                });
+        
+        Owner owner = ownerRepository.findByUserId(user.getId())
+                .orElse(null);
+        
+        if (owner == null) {
+            logger.debug("User {} has no owner profile", username);
+            return false;
+        }
+        
+        boolean isOwner = pet.getOwner().getId().equals(owner.getId());
+        logger.debug("User {} is owner of pet {}: {}", username, petId, isOwner);
+        return isOwner;
     }
 }
 

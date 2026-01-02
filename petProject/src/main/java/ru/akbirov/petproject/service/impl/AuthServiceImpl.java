@@ -3,6 +3,8 @@ package ru.akbirov.petproject.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +17,7 @@ import ru.akbirov.petproject.entity.User;
 import ru.akbirov.petproject.exception.EmailAlreadyExistsException;
 import ru.akbirov.petproject.repository.OwnerRepository;
 import ru.akbirov.petproject.repository.UserRepository;
+import ru.akbirov.petproject.security.JwtService;
 import ru.akbirov.petproject.service.AuthService;
 import ru.akbirov.petproject.util.RoleUtils;
 
@@ -28,6 +31,8 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final OwnerRepository ownerRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final UserDetailsService userDetailsService;
     
     @Override
     @Transactional
@@ -73,8 +78,9 @@ public class AuthServiceImpl implements AuthService {
         logger.info("User registered successfully: username={}, email={}, id={}, ownerId={}", 
                 savedUser.getUsername(), savedUser.getEmail(), savedUser.getId(), owner.getId());
         
-        // Генерируем токен (пока dummy, потом можно добавить JWT)
-        String token = "dummy-token-" + System.currentTimeMillis();
+        // Генерируем JWT токен
+        UserDetails userDetails = userDetailsService.loadUserByUsername(savedUser.getUsername());
+        String token = jwtService.generateToken(userDetails);
         
         return AuthResponseDto.builder()
                 .token(token)
@@ -111,8 +117,9 @@ public class AuthServiceImpl implements AuthService {
         
         logger.info("User logged in successfully: username={}, email={}", user.getUsername(), user.getEmail());
         
-        // Генерируем токен (пока dummy, потом можно добавить JWT)
-        String token = "dummy-token-" + System.currentTimeMillis();
+        // Генерируем JWT токен
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
+        String token = jwtService.generateToken(userDetails);
         
         return AuthResponseDto.builder()
                 .token(token)

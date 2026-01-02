@@ -23,4 +23,8 @@ public interface PetService {
     void deletePet(Long id);
     
     List<PetResponseDto> search(String searchTerm);
+    
+    List<PetResponseDto> getMyPets(String username);
+    
+    boolean isPetOwner(Long petId, String username);
 }

@@ -5,6 +5,7 @@ interface PetListProps {
   onEdit: (pet: Pet) => void;
   onDelete: (id: number) => void;
   isAdmin: boolean;
+  canEditDelete?: boolean; // Если true, показывать кнопки Edit/Delete для всех питомцев в списке
 }
 
 const typeEmojis: Record<Pet['type'], string> = {
@@ -17,7 +18,7 @@ const typeEmojis: Record<Pet['type'], string> = {
   OTHER: '🐾',
 };
 
-function PetList({ pets, onEdit, onDelete, isAdmin }: PetListProps) {
+function PetList({ pets, onEdit, onDelete, isAdmin, canEditDelete = false }: PetListProps) {
   if (pets.length === 0) {
     return (
       <div className="text-center py-12 bg-white rounded-lg shadow">
@@ -55,7 +56,7 @@ function PetList({ pets, onEdit, onDelete, isAdmin }: PetListProps) {
                   )}
                 </div>
               </div>
-              {isAdmin && (
+              {(isAdmin || canEditDelete) && (
                 <div className="flex space-x-2">
                   <button
                     onClick={() => onEdit(pet)}
