@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.BadCredentialsException;
 import ru.akbirov.petproject.dto.ErrorResponseDto;
+import ru.akbirov.petproject.exception.AccessDeniedException;
 import ru.akbirov.petproject.exception.EmailAlreadyExistsException;
 import ru.akbirov.petproject.exception.PhoneAlreadyExistsException;
 import ru.akbirov.petproject.exception.OwnerNotFoundException;
@@ -115,6 +116,19 @@ public class GlobalExceptionHandler {
                 .path(request.getRequestURI())
                 .build();
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+    
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponseDto> handleAccessDeniedException(
+            AccessDeniedException ex, HttpServletRequest request) {
+        log.error("Access denied: {}", ex.getMessage());
+        ErrorResponseDto error = ErrorResponseDto.builder()
+                .message(ex.getMessage())
+                .error("Access Denied")
+                .timestamp(LocalDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
     
     @ExceptionHandler(DataIntegrityViolationException.class)

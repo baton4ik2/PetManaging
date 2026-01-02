@@ -4,9 +4,10 @@ interface OwnerListProps {
   owners: Owner[];
   onEdit: (owner: Owner) => void;
   onDelete: (id: number) => void;
+  isAdmin: boolean;
 }
 
-function OwnerList({ owners, onEdit, onDelete }: OwnerListProps) {
+function OwnerList({ owners, onEdit, onDelete, isAdmin }: OwnerListProps) {
   if (owners.length === 0) {
     return (
       <div className="text-center py-12 bg-white rounded-lg shadow">
@@ -36,20 +37,22 @@ function OwnerList({ owners, onEdit, onDelete }: OwnerListProps) {
                   )}
                 </div>
               </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => onEdit(owner)}
-                  className="px-3 py-1 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => onDelete(owner.id!)}
-                  className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
-                >
-                  Delete
-                </button>
-              </div>
+              {isAdmin && (
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => onEdit(owner)}
+                    className="px-3 py-1 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => onDelete(owner.id!)}
+                    className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
             </div>
           </li>
         ))}

@@ -32,7 +32,7 @@ api.interceptors.request.use(
   }
 );
 
-// Handle 401 errors (unauthorized)
+// Handle 401 errors (unauthorized) and 403 errors (forbidden)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -40,6 +40,7 @@ api.interceptors.response.use(
       authService.logout();
       window.location.href = '/login';
     }
+    // 403 errors are handled by the component showing the error message
     return Promise.reject(error);
   }
 );

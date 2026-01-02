@@ -8,10 +8,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 import ru.akbirov.petproject.dto.OwnerRequestDto;
 import ru.akbirov.petproject.dto.OwnerResponseDto;
 import ru.akbirov.petproject.dto.PetResponseDto;
+import ru.akbirov.petproject.exception.AccessDeniedException;
 import ru.akbirov.petproject.service.OwnerService;
 
 import java.util.List;
@@ -27,7 +30,10 @@ public class OwnerController {
     
     @PostMapping
     @Operation(summary = "Создать нового владельца")
-    public ResponseEntity<OwnerResponseDto> createOwner(@Valid @RequestBody OwnerRequestDto requestDto) {
+    public ResponseEntity<OwnerResponseDto> createOwner(
+            @Valid @RequestBody OwnerRequestDto requestDto,
+            Authentication authentication) {
+        checkAdminAccess(authentication);
         logger.info("Creating new owner: {} {}", requestDto.getFirstName(), requestDto.getLastName());
         OwnerResponseDto response = ownerService.createOwner(requestDto);
         logger.info("Owner created successfully with ID: {}", response.getId());
@@ -66,7 +72,9 @@ public class OwnerController {
     @Operation(summary = "Обновить владельца")
     public ResponseEntity<OwnerResponseDto> updateOwner(
             @PathVariable Long id,
-            @Valid @RequestBody OwnerRequestDto requestDto) {
+            @Valid @RequestBody OwnerRequestDto requestDto,
+            Authentication authentication) {
+        checkAdminAccess(authentication);
         logger.info("Updating owner with ID: {}", id);
         OwnerResponseDto response = ownerService.updateOwner(id, requestDto);
         logger.info("Owner updated successfully: {} {}", response.getFirstName(), response.getLastName());
@@ -75,11 +83,29 @@ public class OwnerController {
     
     @DeleteMapping("/{id}")
     @Operation(summary = "Удалить владельца")
-    public ResponseEntity<Void> deleteOwner(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteOwner(
+            @PathVariable Long id,
+            Authentication authentication) {
+        checkAdminAccess(authentication);
         logger.info("Deleting owner with ID: {}", id);
         ownerService.deleteOwner(id);
         logger.info("Owner deleted successfully with ID: {}", id);
         return ResponseEntity.noContent().build();
+    }
+    
+    private void checkAdminAccess(Authentication authentication) {
+        if (authentication == null) {
+            throw new AccessDeniedException("Authentication required");
+        }
+        
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
+        
+        if (!isAdmin) {
+            logger.warn("Access denied for user: {} - ADMIN role required", authentication.getName());
+            throw new AccessDeniedException("Access denied. ADMIN role required.");
+        }
     }
     
     @GetMapping("/{id}/pets")

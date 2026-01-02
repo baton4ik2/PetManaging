@@ -3,14 +3,18 @@ import { ownerService } from '../services/api';
 import type { Owner } from '../services/api';
 import OwnerForm from '../components/OwnerForm';
 import OwnerList from '../components/OwnerList';
+import { useAuth } from '../contexts/AuthContext';
 
 function Owners() {
+  const { user } = useAuth();
   const [owners, setOwners] = useState<Owner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingOwner, setEditingOwner] = useState<Owner | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  const isAdmin = user?.roles?.includes('ADMIN') || false;
 
   useEffect(() => {
     loadOwners();
@@ -77,15 +81,17 @@ function Owners() {
     <div className="px-4 py-6 sm:px-0">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Owners</h1>
-        <button
-          onClick={() => {
-            setEditingOwner(null);
-            setShowForm(true);
-          }}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-        >
-          + Add Owner
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => {
+              setEditingOwner(null);
+              setShowForm(true);
+            }}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+          >
+            + Add Owner
+          </button>
+        )}
       </div>
 
       <div className="mb-4">
@@ -124,6 +130,7 @@ function Owners() {
         owners={owners}
         onEdit={setEditingOwner}
         onDelete={handleDelete}
+        isAdmin={isAdmin}
       />
     </div>
   );
