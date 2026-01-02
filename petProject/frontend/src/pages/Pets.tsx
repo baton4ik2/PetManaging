@@ -191,7 +191,7 @@ function Pets() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="text-xl text-gray-600">Loading...</div>
+        <div className="text-xl text-gray-600 dark:text-gray-300">Loading...</div>
       </div>
     );
   }
@@ -199,15 +199,15 @@ function Pets() {
   return (
     <div className="px-4 py-6 sm:px-0">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Pets</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Pets</h1>
         <div className="flex items-center gap-4">
-          <div className="flex bg-gray-100 rounded-lg p-1">
+          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
             <button
               onClick={() => setViewMode('all')}
               className={`px-4 py-2 rounded-md transition-colors ${
                 viewMode === 'all'
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-gray-700 hover:bg-gray-200'
+                  ? 'bg-indigo-600 dark:bg-indigo-500 text-white'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
             >
               Все питомцы
@@ -216,8 +216,8 @@ function Pets() {
               onClick={() => setViewMode('my')}
               className={`px-4 py-2 rounded-md transition-colors ${
                 viewMode === 'my'
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-gray-700 hover:bg-gray-200'
+                  ? 'bg-indigo-600 dark:bg-indigo-500 text-white'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
             >
               Мои питомцы
@@ -228,7 +228,7 @@ function Pets() {
               setEditingPet(null);
               setShowForm(true);
             }}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+            className="bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-2 rounded-md hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
           >
             + Add Pet
           </button>
@@ -236,7 +236,7 @@ function Pets() {
       </div>
 
       {error && (
-        <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <div className="mb-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-200 px-4 py-3 rounded">
           {error}
         </div>
       )}
@@ -257,12 +257,12 @@ function Pets() {
                 setShowSearchDropdown(true);
               }
             }}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
           />
           {showSearchDropdown && filteredPets.length > 0 && searchTerm.trim() && (
             <div
               ref={searchDropdownRef}
-              className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+              className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto"
             >
               {filteredPets.map((pet) => (
                 <div
@@ -271,10 +271,10 @@ function Pets() {
                     setSearchTerm(pet.name);
                     setShowSearchDropdown(false);
                   }}
-                  className="px-4 py-2 hover:bg-indigo-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                  className="px-4 py-2 hover:bg-indigo-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
                 >
-                  <div className="font-medium">{pet.name}</div>
-                  <div className="text-sm text-gray-500">
+                  <div className="font-medium dark:text-white">{pet.name}</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
                     {pet.breed} • {pet.type} {pet.ownerName && `• ${pet.ownerName}`}
                   </div>
                 </div>
@@ -282,9 +282,9 @@ function Pets() {
             </div>
           )}
         </div>
-        <div className="bg-white p-4 rounded-lg shadow flex gap-4">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow flex gap-4">
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Filter by Type
             </label>
             <select
@@ -298,7 +298,7 @@ function Pets() {
                   setSearchParams({});
                 }
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
             >
               <option value="">All Types</option>
               <option value="DOG">Dog</option>
@@ -312,13 +312,13 @@ function Pets() {
           </div>
           {viewMode === 'all' && (
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Filter by Owner
               </label>
               <select
                 value={filterOwnerId || ''}
                 onChange={(e) => setFilterOwnerId(e.target.value ? Number(e.target.value) : undefined)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
               >
                 <option value="">All Owners</option>
                 {owners.map((owner) => (

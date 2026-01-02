@@ -39,14 +39,14 @@ function StatisticsPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="text-xl text-gray-600">Loading...</div>
+        <div className="text-xl text-gray-600 dark:text-gray-300">Loading...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+      <div className="bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-200 px-4 py-3 rounded">
         {error}
       </div>
     );
@@ -58,33 +58,33 @@ function StatisticsPage() {
 
   return (
     <div className="px-4 py-6 sm:px-0">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Statistics</h1>
+      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">Statistics</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="text-4xl font-bold text-indigo-600 mb-2">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <div className="text-4xl font-bold text-indigo-600 dark:text-indigo-400 mb-2">
             {statistics.totalOwners}
           </div>
-          <div className="text-gray-600">Total Owners</div>
+          <div className="text-gray-600 dark:text-gray-300">Total Owners</div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="text-4xl font-bold text-indigo-600 mb-2">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <div className="text-4xl font-bold text-indigo-600 dark:text-indigo-400 mb-2">
             {statistics.totalPets}
           </div>
-          <div className="text-gray-600">Total Pets</div>
+          <div className="text-gray-600 dark:text-gray-300">Total Pets</div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="text-4xl font-bold text-indigo-600 mb-2">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <div className="text-4xl font-bold text-indigo-600 dark:text-indigo-400 mb-2">
             {statistics.averagePetsPerOwner}
           </div>
-          <div className="text-gray-600">Avg Pets per Owner</div>
+          <div className="text-gray-600 dark:text-gray-300">Avg Pets per Owner</div>
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
           Pets by Type
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -92,11 +92,11 @@ function StatisticsPage() {
             <div
               key={type}
               onClick={() => navigate(`/pets?type=${type}`)}
-              className="p-4 border border-gray-200 rounded-lg text-center cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
+              className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg text-center cursor-pointer hover:bg-indigo-50 dark:hover:bg-gray-700 hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors"
             >
               <div className="text-3xl mb-2">{typeEmojis[type] || '🐾'}</div>
-              <div className="text-xl font-bold text-gray-900">{count}</div>
-              <div className="text-sm text-gray-600">{type}</div>
+              <div className="text-xl font-bold text-gray-900 dark:text-white">{count}</div>
+              <div className="text-sm text-gray-600 dark:text-gray-300">{type}</div>
             </div>
           ))}
         </div>

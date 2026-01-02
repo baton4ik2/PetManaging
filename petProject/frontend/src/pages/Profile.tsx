@@ -230,7 +230,7 @@ function Profile() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg text-gray-600">Loading...</div>
+        <div className="text-lg text-gray-600 dark:text-gray-300">Loading...</div>
       </div>
     );
   }
@@ -238,7 +238,7 @@ function Profile() {
   if (!profile) {
     return (
       <div className="px-4 py-6 sm:px-0">
-        <div className="text-red-600">Failed to load profile</div>
+        <div className="text-red-600 dark:text-red-400">Failed to load profile</div>
       </div>
     );
   }
@@ -246,16 +246,16 @@ function Profile() {
   return (
     <div className="px-4 py-6 sm:px-0">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">My Profile</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">My Profile</h1>
 
         {/* Profile Information */}
-        <div className="bg-white shadow rounded-lg p-6 mb-6">
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Profile Information</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Profile Information</h2>
             {!isEditing && (
               <button
                 onClick={() => setIsEditing(true)}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                className="px-4 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-md hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
               >
                 Edit Profile
               </button>
@@ -263,13 +263,13 @@ function Profile() {
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-800 text-sm">
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-600 rounded-md text-red-800 dark:text-red-200 text-sm">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md text-green-800 text-sm">
+            <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-600 rounded-md text-green-800 dark:text-green-200 text-sm">
               {success}
             </div>
           )}
@@ -278,20 +278,20 @@ function Profile() {
             <form onSubmit={handleUpdateProfile}>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Username
                   </label>
                   <input
                     type="text"
                     value={profile.username}
                     disabled
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
                   />
-                  <p className="mt-1 text-xs text-gray-500">Username cannot be changed</p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Username cannot be changed</p>
                 </div>
 
                 <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     First Name
                   </label>
                   <input
@@ -300,12 +300,12 @@ function Profile() {
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Last Name
                   </label>
                   <input
@@ -314,12 +314,12 @@ function Profile() {
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Phone Number
                   </label>
                   <input
@@ -333,12 +333,12 @@ function Profile() {
                     required
                     placeholder="+7 937 286 78 88"
                     maxLength={18}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Email
                   </label>
                   <input
@@ -347,19 +347,19 @@ function Profile() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Roles
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {profile.roles.map((role) => (
                       <span
                         key={role}
-                        className="px-2 py-1 bg-indigo-100 text-indigo-800 text-xs font-medium rounded"
+                        className="px-2 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs font-medium rounded"
                       >
                         {role}
                       </span>
@@ -371,7 +371,7 @@ function Profile() {
                   <button
                     type="submit"
                     disabled={isSaving}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                    className="px-4 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-md hover:bg-indigo-700 dark:hover:bg-indigo-600 disabled:opacity-50 transition-colors"
                   >
                     {isSaving ? 'Saving...' : 'Save Changes'}
                   </button>
@@ -386,7 +386,7 @@ function Profile() {
                       setError('');
                       setSuccess('');
                     }}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                   >
                     Cancel
                   </button>
@@ -396,37 +396,37 @@ function Profile() {
           ) : (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">Username</label>
-                <p className="text-gray-900">{profile.username}</p>
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Username</label>
+                <p className="text-gray-900 dark:text-white">{profile.username}</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">First Name</label>
-                <p className="text-gray-900">{profile.firstName || 'Not set'}</p>
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">First Name</label>
+                <p className="text-gray-900 dark:text-white">{profile.firstName || 'Not set'}</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">Last Name</label>
-                <p className="text-gray-900">{profile.lastName || 'Not set'}</p>
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Last Name</label>
+                <p className="text-gray-900 dark:text-white">{profile.lastName || 'Not set'}</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">Phone Number</label>
-                <p className="text-gray-900">{profile.phone || 'Not set'}</p>
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Phone Number</label>
+                <p className="text-gray-900 dark:text-white">{profile.phone || 'Not set'}</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">Email</label>
-                <p className="text-gray-900">{profile.email}</p>
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Email</label>
+                <p className="text-gray-900 dark:text-white">{profile.email}</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">Roles</label>
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Roles</label>
                 <div className="flex flex-wrap gap-2">
                   {profile.roles.map((role) => (
                     <span
                       key={role}
-                      className="px-2 py-1 bg-indigo-100 text-indigo-800 text-xs font-medium rounded"
+                      className="px-2 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs font-medium rounded"
                     >
                       {role}
                     </span>
@@ -435,28 +435,28 @@ function Profile() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">Account Status</label>
-                <p className="text-gray-900">
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Account Status</label>
+                <p className="text-gray-900 dark:text-white">
                   <span className={`px-2 py-1 rounded text-xs font-medium ${
                     profile.enabled 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' 
+                      : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
                   }`}>
                     {profile.enabled ? 'Active' : 'Disabled'}
                   </span>
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">Created At</label>
-                  <p className="text-gray-900 text-sm">
+                  <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Created At</label>
+                  <p className="text-gray-900 dark:text-white text-sm">
                     {new Date(profile.createdAt).toLocaleString()}
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">Last Updated</label>
-                  <p className="text-gray-900 text-sm">
+                  <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Last Updated</label>
+                  <p className="text-gray-900 dark:text-white text-sm">
                     {new Date(profile.updatedAt).toLocaleString()}
                   </p>
                 </div>
@@ -466,27 +466,27 @@ function Profile() {
         </div>
 
         {/* My Pets */}
-        <div className="bg-white shadow rounded-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">My Pets</h2>
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">My Pets</h2>
           {petsLoading ? (
             <div className="text-center py-8">
-              <div className="text-gray-500">Loading pets...</div>
+              <div className="text-gray-500 dark:text-gray-400">Loading pets...</div>
             </div>
           ) : myPets.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500">You don't have any pets yet.</p>
+              <p className="text-gray-500 dark:text-gray-400">You don't have any pets yet.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {myPets.map((pet) => (
-                <div key={pet.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow relative">
+                <div key={pet.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow relative bg-white dark:bg-gray-800">
                   <div className="absolute top-2 right-2 flex gap-1">
                     <button
                       onClick={() => {
                         setEditingPet(pet);
                         setShowPetForm(true);
                       }}
-                      className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                      className="p-1.5 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-gray-700 rounded transition-colors"
                       title="Edit pet"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -495,7 +495,7 @@ function Profile() {
                     </button>
                     <button
                       onClick={() => handleDeletePet(pet.id!)}
-                      className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                      className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-gray-700 rounded transition-colors"
                       title="Delete pet"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -512,9 +512,9 @@ function Profile() {
                        pet.type === 'RABBIT' ? '🐰' : 
                        pet.type === 'HAMSTER' ? '🐹' : '🐾'}
                     </span>
-                    <h3 className="text-lg font-medium text-gray-900">{pet.name}</h3>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">{pet.name}</h3>
                   </div>
-                  <div className="text-sm text-gray-600 space-y-1">
+                  <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
                     <p><span className="font-medium">Breed:</span> {pet.breed}</p>
                     <p><span className="font-medium">Type:</span> {pet.type}</p>
                     <p><span className="font-medium">Born:</span> {new Date(pet.dateOfBirth).toLocaleDateString()}</p>
@@ -524,7 +524,7 @@ function Profile() {
                     {pet.color && <p><span className="font-medium">Color:</span> {pet.color}</p>}
                   </div>
                   {pet.description && (
-                    <p className="mt-2 text-sm text-gray-500">{pet.description}</p>
+                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{pet.description}</p>
                   )}
                 </div>
               ))}
@@ -534,8 +534,8 @@ function Profile() {
 
         {/* Pet Form Modal */}
         {showPetForm && editingPet && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <PetForm
                 pet={editingPet}
                 owners={owners}
@@ -550,13 +550,13 @@ function Profile() {
         )}
 
         {/* Change Password */}
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Change Password</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Change Password</h2>
             {!isChangingPassword && (
               <button
                 onClick={() => setIsChangingPassword(true)}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                className="px-4 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-md hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
               >
                 Change Password
               </button>
@@ -566,20 +566,20 @@ function Profile() {
           {isChangingPassword && (
             <form onSubmit={handleChangePassword}>
               {passwordError && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-800 text-sm">
+                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-600 rounded-md text-red-800 dark:text-red-200 text-sm">
                   {passwordError}
                 </div>
               )}
 
               {passwordSuccess && (
-                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md text-green-800 text-sm">
+                <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-600 rounded-md text-green-800 dark:text-green-200 text-sm">
                   {passwordSuccess}
                 </div>
               )}
 
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Current Password
                   </label>
                   <input
@@ -588,12 +588,12 @@ function Profile() {
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     New Password
                   </label>
                   <input
@@ -603,12 +603,12 @@ function Profile() {
                     onChange={(e) => setNewPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Confirm New Password
                   </label>
                   <input
@@ -618,14 +618,14 @@ function Profile() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
                   />
                 </div>
 
                 <div className="flex space-x-3">
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                    className="px-4 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-md hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
                   >
                     Change Password
                   </button>
@@ -639,7 +639,7 @@ function Profile() {
                       setPasswordError('');
                       setPasswordSuccess('');
                     }}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                   >
                     Cancel
                   </button>

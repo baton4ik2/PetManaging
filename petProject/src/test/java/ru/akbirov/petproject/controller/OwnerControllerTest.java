@@ -43,9 +43,8 @@ class OwnerControllerTest {
         Authentication auth = mock(Authentication.class);
         GrantedAuthority authority = mock(GrantedAuthority.class);
         when(authority.getAuthority()).thenReturn("ROLE_ADMIN");
-        @SuppressWarnings("unchecked")
-        java.util.Collection<GrantedAuthority> authorities = (java.util.Collection<GrantedAuthority>) Collections.singletonList(authority);
-        when(auth.getAuthorities()).thenReturn(authorities);
+        java.util.List<GrantedAuthority> authoritiesList = Collections.singletonList(authority);
+        when(auth.getAuthorities()).thenAnswer(invocation -> authoritiesList);
         when(auth.getName()).thenReturn("admin");
         when(auth.isAuthenticated()).thenReturn(true);
         return auth;
@@ -55,9 +54,8 @@ class OwnerControllerTest {
         Authentication auth = mock(Authentication.class);
         GrantedAuthority authority = mock(GrantedAuthority.class);
         when(authority.getAuthority()).thenReturn("ROLE_USER");
-        @SuppressWarnings("unchecked")
-        java.util.Collection<GrantedAuthority> authorities = (java.util.Collection<GrantedAuthority>) Collections.singletonList(authority);
-        when(auth.getAuthorities()).thenReturn(authorities);
+        java.util.List<GrantedAuthority> authoritiesList = Collections.singletonList(authority);
+        when(auth.getAuthorities()).thenAnswer(invocation -> authoritiesList);
         when(auth.getName()).thenReturn("user");
         when(auth.isAuthenticated()).thenReturn(true);
         return auth;

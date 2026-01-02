@@ -33,7 +33,8 @@ class RoleUtilsTest {
     @Test
     void testRemoveRolePrefix_Null() {
         // When
-        String result = RoleUtils.removeRolePrefix(null);
+        String nullString = null;
+        String result = RoleUtils.removeRolePrefix(nullString);
 
         // Then
         assertNull(result);
