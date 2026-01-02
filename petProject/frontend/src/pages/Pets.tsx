@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { petService, ownerService } from '../services/api';
 import type { Pet, Owner } from '../services/api';
 import PetForm from '../components/PetForm';
@@ -17,17 +17,13 @@ function Pets() {
   const [filterOwnerId, setFilterOwnerId] = useState<number | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'all' | 'my'>('all');
+  const debounceTimerRef = useRef<number | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const cursorPositionRef = useRef<number | null>(null);
   
   const isAdmin = user?.roles?.includes('ADMIN') || false;
 
-  useEffect(() => {
-    loadPets();
-    if (viewMode === 'all') {
-      loadOwners();
-    }
-  }, [filterType, filterOwnerId, searchTerm, viewMode]);
-
-  const loadPets = async () => {
+  const loadPets = useCallback(async (search?: string) => {
     try {
       setLoading(true);
       let response;
@@ -39,12 +35,12 @@ function Pets() {
         if (filterType) {
           filteredPets = filteredPets.filter(pet => pet.type === filterType);
         }
-        if (searchTerm.trim()) {
-          const search = searchTerm.trim().toLowerCase();
+        if (search?.trim()) {
+          const searchLower = search.trim().toLowerCase();
           filteredPets = filteredPets.filter(pet => 
-            pet.name.toLowerCase().includes(search) ||
-            pet.breed.toLowerCase().includes(search) ||
-            pet.ownerName?.toLowerCase().includes(search)
+            pet.name.toLowerCase().includes(searchLower) ||
+            pet.breed.toLowerCase().includes(searchLower) ||
+            pet.ownerName?.toLowerCase().includes(searchLower)
           );
         }
         setPets(filteredPets);
@@ -53,7 +49,7 @@ function Pets() {
         response = await petService.getAll(
           filterType || undefined,
           filterOwnerId,
-          searchTerm.trim() || undefined
+          search?.trim() || undefined
         );
         setPets(response.data);
       }
@@ -62,22 +58,79 @@ function Pets() {
       setError(err.response?.data?.message || 'Failed to load pets');
     } finally {
       setLoading(false);
+      // Восстанавливаем фокус после загрузки с несколькими попытками
+      setTimeout(() => {
+        requestAnimationFrame(() => {
+          if (searchInputRef.current) {
+            searchInputRef.current.focus();
+            if (cursorPositionRef.current !== null) {
+              searchInputRef.current.setSelectionRange(
+                cursorPositionRef.current,
+                cursorPositionRef.current
+              );
+            }
+          }
+        });
+      }, 0);
     }
-  };
+  }, [viewMode, filterType, filterOwnerId]);
 
-  const loadOwners = async () => {
+  const loadOwners = useCallback(async () => {
     try {
       const response = await ownerService.getAll();
       setOwners(response.data);
     } catch (err) {
       console.error('Failed to load owners:', err);
     }
-  };
+  }, []);
+
+  // Initial load and when filters change (except search)
+  useEffect(() => {
+    loadPets();
+    if (viewMode === 'all') {
+      loadOwners();
+    }
+  }, [filterType, filterOwnerId, viewMode, loadPets, loadOwners]);
+
+  // Debounced search
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = window.setTimeout(() => {
+      loadPets(searchTerm);
+    }, 1000);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [searchTerm, loadPets]);
+
+  // Восстанавливаем фокус после каждого изменения loading
+  useEffect(() => {
+    if (!loading && searchInputRef.current && document.activeElement !== searchInputRef.current) {
+      const timer = setTimeout(() => {
+        if (searchInputRef.current) {
+          searchInputRef.current.focus();
+          if (cursorPositionRef.current !== null) {
+            searchInputRef.current.setSelectionRange(
+              cursorPositionRef.current,
+              cursorPositionRef.current
+            );
+          }
+        }
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
   const handleCreate = async (petData: Omit<Pet, 'id' | 'createdAt' | 'updatedAt' | 'ownerName'>) => {
     try {
       await petService.create(petData);
-      await loadPets();
+      await loadPets(searchTerm);
       setShowForm(false);
       setError(null);
     } catch (err: any) {
@@ -88,7 +141,7 @@ function Pets() {
   const handleUpdate = async (id: number, petData: Omit<Pet, 'id' | 'createdAt' | 'updatedAt' | 'ownerName'>) => {
     try {
       await petService.update(id, petData);
-      await loadPets();
+      await loadPets(searchTerm);
       setEditingPet(null);
       setError(null);
     } catch (err: any) {
@@ -101,7 +154,7 @@ function Pets() {
     
     try {
       await petService.delete(id);
-      await loadPets();
+      await loadPets(searchTerm);
       setError(null);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to delete pet');
@@ -164,10 +217,22 @@ function Pets() {
       <div className="mb-4 space-y-4">
         <div>
           <input
+            ref={searchInputRef}
             type="text"
             placeholder="Search pets by name, breed, or owner..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              cursorPositionRef.current = e.target.selectionStart;
+              setSearchTerm(e.target.value);
+            }}
+            onFocus={(e) => {
+              if (cursorPositionRef.current !== null) {
+                e.target.setSelectionRange(
+                  cursorPositionRef.current,
+                  cursorPositionRef.current
+                );
+              }
+            }}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
