@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { userService } from '../services/authService';
 import { formatPhoneNumber, normalizePhoneNumber } from '../utils/phoneUtils';
+import { petService, ownerService } from '../services/api';
+import type { Pet, Owner } from '../services/api';
+import PetForm from '../components/PetForm';
 
 interface UserProfile {
   id: number;
@@ -37,8 +40,17 @@ function Profile() {
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
 
+  // My Pets
+  const [myPets, setMyPets] = useState<Pet[]>([]);
+  const [petsLoading, setPetsLoading] = useState(false);
+  const [editingPet, setEditingPet] = useState<Pet | null>(null);
+  const [showPetForm, setShowPetForm] = useState(false);
+  const [owners, setOwners] = useState<Owner[]>([]);
+
   useEffect(() => {
     loadProfile();
+    loadMyPets();
+    loadOwners();
   }, []);
 
   const loadProfile = async () => {
@@ -140,6 +152,51 @@ function Profile() {
       setError(err.response?.data?.message || 'Failed to update profile');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const loadMyPets = async () => {
+    try {
+      setPetsLoading(true);
+      const response = await petService.getMyPets();
+      setMyPets(response.data);
+    } catch (err: any) {
+      console.error('Failed to load pets:', err);
+    } finally {
+      setPetsLoading(false);
+    }
+  };
+
+  const loadOwners = async () => {
+    try {
+      const response = await ownerService.getAll();
+      setOwners(response.data);
+    } catch (err) {
+      console.error('Failed to load owners:', err);
+    }
+  };
+
+  const handleUpdatePet = async (id: number, petData: Omit<Pet, 'id' | 'createdAt' | 'updatedAt' | 'ownerName'>) => {
+    try {
+      await petService.update(id, petData);
+      await loadMyPets();
+      setEditingPet(null);
+      setShowPetForm(false);
+      setSuccess('Pet updated successfully');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to update pet');
+    }
+  };
+
+  const handleDeletePet = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this pet?')) return;
+    
+    try {
+      await petService.delete(id);
+      await loadMyPets();
+      setSuccess('Pet deleted successfully');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to delete pet');
     }
   };
 
@@ -407,6 +464,90 @@ function Profile() {
             </div>
           )}
         </div>
+
+        {/* My Pets */}
+        <div className="bg-white shadow rounded-lg p-6 mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">My Pets</h2>
+          {petsLoading ? (
+            <div className="text-center py-8">
+              <div className="text-gray-500">Loading pets...</div>
+            </div>
+          ) : myPets.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">You don't have any pets yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {myPets.map((pet) => (
+                <div key={pet.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow relative">
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    <button
+                      onClick={() => {
+                        setEditingPet(pet);
+                        setShowPetForm(true);
+                      }}
+                      className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                      title="Edit pet"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleDeletePet(pet.id!)}
+                      className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                      title="Delete pet"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div className="flex items-center mb-2 pr-8">
+                    <span className="text-2xl mr-2">
+                      {pet.type === 'DOG' ? '🐕' : 
+                       pet.type === 'CAT' ? '🐈' : 
+                       pet.type === 'BIRD' ? '🐦' : 
+                       pet.type === 'FISH' ? '🐠' : 
+                       pet.type === 'RABBIT' ? '🐰' : 
+                       pet.type === 'HAMSTER' ? '🐹' : '🐾'}
+                    </span>
+                    <h3 className="text-lg font-medium text-gray-900">{pet.name}</h3>
+                  </div>
+                  <div className="text-sm text-gray-600 space-y-1">
+                    <p><span className="font-medium">Breed:</span> {pet.breed}</p>
+                    <p><span className="font-medium">Type:</span> {pet.type}</p>
+                    <p><span className="font-medium">Born:</span> {new Date(pet.dateOfBirth).toLocaleDateString()}</p>
+                    {pet.age !== undefined && (
+                      <p><span className="font-medium">Age:</span> {pet.age} {pet.age === 1 ? 'year' : 'years'} old</p>
+                    )}
+                    {pet.color && <p><span className="font-medium">Color:</span> {pet.color}</p>}
+                  </div>
+                  {pet.description && (
+                    <p className="mt-2 text-sm text-gray-500">{pet.description}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Pet Form Modal */}
+        {showPetForm && editingPet && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <PetForm
+                pet={editingPet}
+                owners={owners}
+                onSubmit={(data) => handleUpdatePet(editingPet.id!, data)}
+                onCancel={() => {
+                  setShowPetForm(false);
+                  setEditingPet(null);
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Change Password */}
         <div className="bg-white shadow rounded-lg p-6">
