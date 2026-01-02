@@ -12,6 +12,7 @@
     <include file="db/changelog/1.0/insert-test-data.xml"/>
     <include file="db/changelog/1.0/add-user-id-to-owners.xml"/>
     <include file="db/changelog/1.0/add-phone-unique-constraint.xml"/>
+    <include file="db/changelog/1.0/insert-admin-user-with-pets.xml"/>
 
 </databaseChangeLog>
 

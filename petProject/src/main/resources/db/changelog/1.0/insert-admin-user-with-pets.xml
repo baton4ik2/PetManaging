@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="insert-admin-user-with-pets" author="pet-project">
+        <!-- Создаем пользователя admin -->
+        <!-- Пароль: admin123 (захеширован BCrypt) -->
+        <insert tableName="users">
+            <column name="username" value="admin"/>
+            <column name="email" value="admin@petproject.com"/>
+            <column name="password" value="$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iwK8pLN6"/>
+            <column name="enabled" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <!-- Привязываем роль ADMIN к пользователю admin -->
+        <insert tableName="user_roles">
+            <column name="user_id" valueComputed="(SELECT id FROM users WHERE username = 'admin')"/>
+            <column name="role" value="ADMIN"/>
+        </insert>
+        
+        <!-- Также добавляем роль USER (по умолчанию) -->
+        <insert tableName="user_roles">
+            <column name="user_id" valueComputed="(SELECT id FROM users WHERE username = 'admin')"/>
+            <column name="role" value="USER"/>
+        </insert>
+        
+        <!-- Создаем Owner для пользователя admin -->
+        <insert tableName="owners">
+            <column name="first_name" value="admin"/>
+            <column name="last_name" value="admin"/>
+            <column name="email" value="admin@petproject.com"/>
+            <column name="phone" value="+7 999 999 99 99"/>
+            <column name="address" value=""/>
+            <column name="user_id" valueComputed="(SELECT id FROM users WHERE username = 'admin')"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <!-- Создаем первого питомца для admin -->
+        <insert tableName="pets">
+            <column name="name" value="Max"/>
+            <column name="type" value="DOG"/>
+            <column name="breed" value="Golden Retriever"/>
+            <column name="date_of_birth" valueDate="2021-06-15"/>
+            <column name="color" value="Golden"/>
+            <column name="description" value="Friendly and energetic dog"/>
+            <column name="owner_id" valueComputed="(SELECT id FROM owners WHERE user_id = (SELECT id FROM users WHERE username = 'admin'))"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        
+        <!-- Создаем второго питомца для admin -->
+        <insert tableName="pets">
+            <column name="name" value="Luna"/>
+            <column name="type" value="CAT"/>
+            <column name="breed" value="Persian"/>
+            <column name="date_of_birth" valueDate="2022-03-20"/>
+            <column name="color" value="White"/>
+            <column name="description" value="Calm and affectionate cat"/>
+            <column name="owner_id" valueComputed="(SELECT id FROM owners WHERE user_id = (SELECT id FROM users WHERE username = 'admin'))"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>
+
