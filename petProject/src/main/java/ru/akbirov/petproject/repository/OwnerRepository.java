@@ -16,6 +16,8 @@ public interface OwnerRepository extends JpaRepository<Owner, Long> {
     
     boolean existsByEmail(String email);
     
+    boolean existsByPhone(String phone);
+    
     @Query("SELECT o FROM Owner o WHERE " +
            "LOWER(o.firstName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
            "OR LOWER(o.lastName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +

@@ -9,6 +9,9 @@ export interface RegisterRequest {
   username: string;
   email: string;
   password: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
 }
 
 export interface AuthResponse {
@@ -94,6 +97,9 @@ export interface UserProfile {
   id: number;
   username: string;
   email: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
   roles: string[];
   enabled: boolean;
   createdAt: string;
@@ -112,12 +118,17 @@ export const userService = {
     console.warn('No user data in localStorage, using default');
     return api.get<UserProfile>('/users/me');
   },
-  updateProfile: (email: string) => {
+  updateProfile: (email: string, firstName: string, lastName: string, phone: string) => {
     const user = authService.getUser();
     if (!user || !user.username) {
       throw new Error('User not authenticated');
     }
-    return api.put<UserProfile>(`/users/me?username=${encodeURIComponent(user.username)}`, { email });
+    return api.put<UserProfile>(`/users/me?username=${encodeURIComponent(user.username)}`, { 
+      email,
+      firstName,
+      lastName,
+      phone
+    });
   },
   changePassword: (currentPassword: string, newPassword: string) => {
     const user = authService.getUser();

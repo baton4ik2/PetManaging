@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { userService } from '../services/authService';
+import { formatPhoneNumber, normalizePhoneNumber } from '../utils/phoneUtils';
 
 interface UserProfile {
   id: number;
   username: string;
   email: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
   roles: string[];
   enabled: boolean;
   createdAt: string;
@@ -17,6 +21,9 @@ function Profile() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -68,6 +75,10 @@ function Profile() {
       
       setProfile(profileData);
       setEmail(profileData.email);
+      setFirstName(profileData.firstName || '');
+      setLastName(profileData.lastName || '');
+      // Форматируем номер телефона при загрузке, если он уже в БД в правильном формате
+      setPhone(profileData.phone || '');
     } catch (err: any) {
       setError('Failed to load profile');
       // Если запрос не удался, используем данные из AuthContext или localStorage
@@ -110,7 +121,9 @@ function Profile() {
     setIsSaving(true);
 
     try {
-      const response = await userService.updateProfile(email);
+      // Нормализуем номер телефона перед отправкой
+      const normalizedPhone = normalizePhoneNumber(phone);
+      const response = await userService.updateProfile(email, firstName, lastName, normalizedPhone);
       setProfile(response.data);
       // Update auth context and localStorage
       const updatedUser = {
@@ -221,6 +234,53 @@ function Profile() {
                 </div>
 
                 <div>
+                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                    First Name
+                  </label>
+                  <input
+                    id="firstName"
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                    Last Name
+                  </label>
+                  <input
+                    id="lastName"
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone Number
+                  </label>
+                  <input
+                    id="phone"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => {
+                      const formatted = formatPhoneNumber(e.target.value);
+                      setPhone(formatted);
+                    }}
+                    required
+                    placeholder="+7 937 286 78 88"
+                    maxLength={18}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                     Email
                   </label>
@@ -263,6 +323,9 @@ function Profile() {
                     onClick={() => {
                       setIsEditing(false);
                       setEmail(profile.email);
+                      setFirstName(profile.firstName || '');
+                      setLastName(profile.lastName || '');
+                      setPhone(profile.phone || '');
                       setError('');
                       setSuccess('');
                     }}
@@ -278,6 +341,21 @@ function Profile() {
               <div>
                 <label className="block text-sm font-medium text-gray-500 mb-1">Username</label>
                 <p className="text-gray-900">{profile.username}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1">First Name</label>
+                <p className="text-gray-900">{profile.firstName || 'Not set'}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1">Last Name</label>
+                <p className="text-gray-900">{profile.lastName || 'Not set'}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1">Phone Number</label>
+                <p className="text-gray-900">{profile.phone || 'Not set'}</p>
               </div>
 
               <div>

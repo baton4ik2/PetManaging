@@ -183,6 +183,9 @@ class ApiIntegrationTest extends AbstractTestcontainersTest {
                 .username("newuser")
                 .email("newuser@example.com")
                 .password("password123")
+                .firstName("Jane")
+                .lastName("Smith")
+                .phone("9876543210")
                 .build();
 
         mockMvc.perform(post("/api/auth/register")

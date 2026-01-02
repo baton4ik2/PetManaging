@@ -8,8 +8,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.akbirov.petproject.dto.UpdateProfileDto;
 import ru.akbirov.petproject.dto.UserProfileDto;
+import ru.akbirov.petproject.entity.Owner;
 import ru.akbirov.petproject.entity.User;
 import ru.akbirov.petproject.exception.UserNotFoundException;
+import ru.akbirov.petproject.repository.OwnerRepository;
 import ru.akbirov.petproject.repository.UserRepository;
 import ru.akbirov.petproject.service.UserService;
 import ru.akbirov.petproject.util.RoleUtils;
@@ -22,6 +24,7 @@ public class UserServiceImpl implements UserService {
     
     private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
     private final UserRepository userRepository;
+    private final OwnerRepository ownerRepository;
     private final PasswordEncoder passwordEncoder;
     
     @Override
@@ -34,7 +37,10 @@ public class UserServiceImpl implements UserService {
                     return new UserNotFoundException("User not found with username: " + username);
                 });
         
-        UserProfileDto dto = UserProfileDto.builder()
+        // Получаем Owner для этого пользователя
+        Owner owner = ownerRepository.findByUserId(user.getId()).orElse(null);
+        
+        UserProfileDto.UserProfileDtoBuilder dtoBuilder = UserProfileDto.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
@@ -43,10 +49,22 @@ public class UserServiceImpl implements UserService {
                         .collect(Collectors.toSet()))
                 .enabled(user.getEnabled())
                 .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
-                .build();
+                .updatedAt(user.getUpdatedAt());
         
-        logger.debug("User profile retrieved: username={}, email={}", user.getUsername(), user.getEmail());
+        // Добавляем данные из Owner, если они есть
+        if (owner != null) {
+            dtoBuilder.firstName(owner.getFirstName())
+                    .lastName(owner.getLastName())
+                    .phone(owner.getPhone());
+        }
+        
+        UserProfileDto dto = dtoBuilder.build();
+        
+        logger.debug("User profile retrieved: username={}, email={}, firstName={}, lastName={}, phone={}", 
+                user.getUsername(), user.getEmail(), 
+                owner != null ? owner.getFirstName() : null,
+                owner != null ? owner.getLastName() : null,
+                owner != null ? owner.getPhone() : null);
         return dto;
     }
     
@@ -67,13 +85,39 @@ public class UserServiceImpl implements UserService {
             throw new ru.akbirov.petproject.exception.EmailAlreadyExistsException(updateDto.getEmail());
         }
         
+        // Обновляем email пользователя
         user.setEmail(updateDto.getEmail());
         User updatedUser = userRepository.save(user);
+        
+        // Получаем или создаем Owner для этого пользователя
+        Owner owner = ownerRepository.findByUserId(updatedUser.getId())
+                .orElse(Owner.builder()
+                        .user(updatedUser)
+                        .email(updatedUser.getEmail())
+                        .address("")
+                        .build());
+        
+        // Проверяем, не занят ли телефон другим владельцем
+        if ((owner.getPhone() == null || !owner.getPhone().equals(updateDto.getPhone())) 
+                && ownerRepository.existsByPhone(updateDto.getPhone())) {
+            logger.warn("Phone already exists: {}", updateDto.getPhone());
+            throw new ru.akbirov.petproject.exception.PhoneAlreadyExistsException(updateDto.getPhone());
+        }
+        
+        // Обновляем данные Owner
+        owner.setFirstName(updateDto.getFirstName());
+        owner.setLastName(updateDto.getLastName());
+        owner.setPhone(updateDto.getPhone());
+        owner.setEmail(updateDto.getEmail());
+        Owner updatedOwner = ownerRepository.save(owner);
         
         UserProfileDto dto = UserProfileDto.builder()
                 .id(updatedUser.getId())
                 .username(updatedUser.getUsername())
                 .email(updatedUser.getEmail())
+                .firstName(updatedOwner.getFirstName())
+                .lastName(updatedOwner.getLastName())
+                .phone(updatedOwner.getPhone())
                 .roles(updatedUser.getRoles().stream()
                         .map(role -> RoleUtils.removeRolePrefix("ROLE_" + role.name()))
                         .collect(Collectors.toSet()))
@@ -82,7 +126,9 @@ public class UserServiceImpl implements UserService {
                 .updatedAt(updatedUser.getUpdatedAt())
                 .build();
         
-        logger.info("User profile updated: username={}, email={}", updatedUser.getUsername(), updatedUser.getEmail());
+        logger.info("User profile updated: username={}, email={}, firstName={}, lastName={}, phone={}", 
+                updatedUser.getUsername(), updatedUser.getEmail(), 
+                updatedOwner.getFirstName(), updatedOwner.getLastName(), updatedOwner.getPhone());
         return dto;
     }
     

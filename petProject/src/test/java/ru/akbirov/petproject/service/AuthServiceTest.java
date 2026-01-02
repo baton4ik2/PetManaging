@@ -11,10 +11,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import ru.akbirov.petproject.dto.AuthResponseDto;
 import ru.akbirov.petproject.dto.LoginDto;
 import ru.akbirov.petproject.dto.RegisterDto;
+import ru.akbirov.petproject.entity.Owner;
 import ru.akbirov.petproject.entity.Role;
 import ru.akbirov.petproject.entity.User;
 import ru.akbirov.petproject.exception.EmailAlreadyExistsException;
 import ru.akbirov.petproject.exception.UsernameAlreadyExistsException;
+import ru.akbirov.petproject.repository.OwnerRepository;
 import ru.akbirov.petproject.repository.UserRepository;
 import ru.akbirov.petproject.service.impl.AuthServiceImpl;
 
@@ -32,6 +34,9 @@ class AuthServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private OwnerRepository ownerRepository;
+
+    @Mock
     private PasswordEncoder passwordEncoder;
 
     @InjectMocks
@@ -47,6 +52,9 @@ class AuthServiceTest {
                 .username("testuser")
                 .email("test@example.com")
                 .password("password123")
+                .firstName("John")
+                .lastName("Doe")
+                .phone("1234567890")
                 .build();
 
         loginDto = LoginDto.builder()
@@ -71,6 +79,11 @@ class AuthServiceTest {
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(user);
+        when(ownerRepository.save(any(Owner.class))).thenAnswer(invocation -> {
+            Owner owner = invocation.getArgument(0);
+            owner.setId(1L);
+            return owner;
+        });
 
         // When
         AuthResponseDto response = authService.register(registerDto);
@@ -84,6 +97,7 @@ class AuthServiceTest {
         verify(userRepository, times(1)).existsByUsername("testuser");
         verify(userRepository, times(1)).existsByEmail("test@example.com");
         verify(userRepository, times(1)).save(any(User.class));
+        verify(ownerRepository, times(1)).save(any(Owner.class));
         verify(passwordEncoder, times(1)).encode("password123");
     }
 

@@ -12,6 +12,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.BadCredentialsException;
 import ru.akbirov.petproject.dto.ErrorResponseDto;
 import ru.akbirov.petproject.exception.EmailAlreadyExistsException;
+import ru.akbirov.petproject.exception.PhoneAlreadyExistsException;
 import ru.akbirov.petproject.exception.OwnerNotFoundException;
 import ru.akbirov.petproject.exception.PetNotFoundException;
 import ru.akbirov.petproject.exception.UserNotFoundException;
@@ -71,6 +72,19 @@ public class GlobalExceptionHandler {
         ErrorResponseDto error = ErrorResponseDto.builder()
                 .message(ex.getMessage())
                 .error("Username Already Exists")
+                .timestamp(LocalDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+    
+    @ExceptionHandler(PhoneAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponseDto> handlePhoneAlreadyExistsException(
+            PhoneAlreadyExistsException ex, HttpServletRequest request) {
+        log.error("Phone already exists: {}", ex.getMessage());
+        ErrorResponseDto error = ErrorResponseDto.builder()
+                .message(ex.getMessage())
+                .error("Phone Already Exists")
                 .timestamp(LocalDateTime.now())
                 .path(request.getRequestURI())
                 .build();

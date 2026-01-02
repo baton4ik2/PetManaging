@@ -17,6 +17,9 @@ public class UserProfileDto {
     private Long id;
     private String username;
     private String email;
+    private String firstName;
+    private String lastName;
+    private String phone;
     private Set<String> roles;
     private Boolean enabled;
     private LocalDateTime createdAt;

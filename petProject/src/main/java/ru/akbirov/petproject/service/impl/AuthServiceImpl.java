@@ -9,9 +9,11 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.akbirov.petproject.dto.AuthResponseDto;
 import ru.akbirov.petproject.dto.LoginDto;
 import ru.akbirov.petproject.dto.RegisterDto;
+import ru.akbirov.petproject.entity.Owner;
 import ru.akbirov.petproject.entity.Role;
 import ru.akbirov.petproject.entity.User;
 import ru.akbirov.petproject.exception.EmailAlreadyExistsException;
+import ru.akbirov.petproject.repository.OwnerRepository;
 import ru.akbirov.petproject.repository.UserRepository;
 import ru.akbirov.petproject.service.AuthService;
 import ru.akbirov.petproject.util.RoleUtils;
@@ -24,6 +26,7 @@ public class AuthServiceImpl implements AuthService {
     
     private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
     private final UserRepository userRepository;
+    private final OwnerRepository ownerRepository;
     private final PasswordEncoder passwordEncoder;
     
     @Override
@@ -55,8 +58,20 @@ public class AuthServiceImpl implements AuthService {
         
         User savedUser = userRepository.save(user);
         
-        logger.info("User registered successfully: username={}, email={}, id={}", 
-                savedUser.getUsername(), savedUser.getEmail(), savedUser.getId());
+        // Создаем Owner автоматически при регистрации
+        Owner owner = Owner.builder()
+                .firstName(registerDto.getFirstName())
+                .lastName(registerDto.getLastName())
+                .email(registerDto.getEmail())
+                .phone(registerDto.getPhone())
+                .address("") // Адрес можно будет обновить позже
+                .user(savedUser)
+                .build();
+        
+        ownerRepository.save(owner);
+        
+        logger.info("User registered successfully: username={}, email={}, id={}, ownerId={}", 
+                savedUser.getUsername(), savedUser.getEmail(), savedUser.getId(), owner.getId());
         
         // Генерируем токен (пока dummy, потом можно добавить JWT)
         String token = "dummy-token-" + System.currentTimeMillis();
