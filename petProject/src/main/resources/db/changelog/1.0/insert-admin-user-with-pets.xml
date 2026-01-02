@@ -11,7 +11,7 @@
         <insert tableName="users">
             <column name="username" value="admin"/>
             <column name="email" value="admin@petproject.com"/>
-            <column name="password" value="$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iwK8pLN6"/>
+            <column name="password" value="$2a$10$U7sSAUb32MZrH0SIeDlOkOZ3tuZkfcLcRqNYWBNoKsn/T1j7XpAiq"/>
             <column name="enabled" valueBoolean="true"/>
             <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
             <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
