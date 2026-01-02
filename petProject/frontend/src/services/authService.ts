@@ -112,8 +112,22 @@ export const userService = {
     console.warn('No user data in localStorage, using default');
     return api.get<UserProfile>('/users/me');
   },
-  updateProfile: (email: string) => api.put<UserProfile>('/users/me', { email }),
-  changePassword: (currentPassword: string, newPassword: string) =>
-    api.put('/users/me/password', { currentPassword, newPassword }),
+  updateProfile: (email: string) => {
+    const user = authService.getUser();
+    if (!user || !user.username) {
+      throw new Error('User not authenticated');
+    }
+    return api.put<UserProfile>(`/users/me?username=${encodeURIComponent(user.username)}`, { email });
+  },
+  changePassword: (currentPassword: string, newPassword: string) => {
+    const user = authService.getUser();
+    if (!user || !user.username) {
+      throw new Error('User not authenticated');
+    }
+    return api.put(`/users/me/password?username=${encodeURIComponent(user.username)}`, { 
+      currentPassword, 
+      newPassword 
+    });
+  },
 };
 

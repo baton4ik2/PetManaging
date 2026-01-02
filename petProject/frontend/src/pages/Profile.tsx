@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import api from '../services/api';
 import { userService } from '../services/authService';
 
 interface UserProfile {
@@ -111,7 +110,7 @@ function Profile() {
     setIsSaving(true);
 
     try {
-      const response = await api.put<UserProfile>('/users/me', { email });
+      const response = await userService.updateProfile(email);
       setProfile(response.data);
       // Update auth context and localStorage
       const updatedUser = {
@@ -147,10 +146,7 @@ function Profile() {
     }
 
     try {
-      await api.put('/users/me/password', {
-        currentPassword,
-        newPassword,
-      });
+      await userService.changePassword(currentPassword, newPassword);
       setPasswordSuccess('Password changed successfully');
       setCurrentPassword('');
       setNewPassword('');

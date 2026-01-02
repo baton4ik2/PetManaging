@@ -8,6 +8,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.BadCredentialsException;
 import ru.akbirov.petproject.dto.ErrorResponseDto;
 import ru.akbirov.petproject.exception.EmailAlreadyExistsException;
@@ -100,6 +101,32 @@ public class GlobalExceptionHandler {
                 .path(request.getRequestURI())
                 .build();
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+    
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponseDto> handleDataIntegrityViolationException(
+            DataIntegrityViolationException ex, HttpServletRequest request) {
+        log.error("Data integrity violation: {}", ex.getMessage());
+        
+        String message = "Data integrity violation";
+        String errorMessage = ex.getMessage();
+        
+        // Проверяем, связано ли это с уникальными ограничениями
+        if (errorMessage != null) {
+            if (errorMessage.contains("username") || errorMessage.contains("users_username_key")) {
+                message = "Username already exists";
+            } else if (errorMessage.contains("email") || errorMessage.contains("users_email_key")) {
+                message = "Email already exists";
+            }
+        }
+        
+        ErrorResponseDto error = ErrorResponseDto.builder()
+                .message(message)
+                .error("Data Integrity Violation")
+                .timestamp(LocalDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
     
     @ExceptionHandler(MethodArgumentNotValidException.class)
