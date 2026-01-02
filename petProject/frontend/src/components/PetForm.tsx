@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Pet, Owner } from '../services/api';
 
 interface PetFormProps {
@@ -16,11 +16,16 @@ function PetForm({ pet, owners, onSubmit, onCancel }: PetFormProps) {
     dateOfBirth: '',
     color: '',
     description: '',
-    ownerId: owners[0]?.id || 0,
+    ownerId: 0,
   });
+  const [ownerSearch, setOwnerSearch] = useState('');
+  const [showOwnerDropdown, setShowOwnerDropdown] = useState(false);
+  const ownerInputRef = useRef<HTMLInputElement>(null);
+  const ownerDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (pet) {
+      const owner = owners.find(o => o.id === pet.ownerId);
       setFormData({
         name: pet.name,
         type: pet.type,
@@ -30,11 +35,71 @@ function PetForm({ pet, owners, onSubmit, onCancel }: PetFormProps) {
         description: pet.description || '',
         ownerId: pet.ownerId,
       });
+      setOwnerSearch(owner ? `${owner.firstName} ${owner.lastName}` : '');
+    } else {
+      setFormData({
+        name: '',
+        type: 'DOG' as Pet['type'],
+        breed: '',
+        dateOfBirth: '',
+        color: '',
+        description: '',
+        ownerId: 0,
+      });
+      setOwnerSearch('');
     }
   }, [pet, owners]);
 
+  // Закрываем dropdown при клике вне его
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        ownerDropdownRef.current &&
+        !ownerDropdownRef.current.contains(event.target as Node) &&
+        ownerInputRef.current &&
+        !ownerInputRef.current.contains(event.target as Node)
+      ) {
+        setShowOwnerDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const filteredOwners = owners.filter(owner => {
+    const fullName = `${owner.firstName} ${owner.lastName}`.toLowerCase();
+    return fullName.includes(ownerSearch.toLowerCase());
+  });
+
+  const handleOwnerSelect = (owner: Owner) => {
+    setFormData({ ...formData, ownerId: owner.id! });
+    setOwnerSearch(`${owner.firstName} ${owner.lastName}`);
+    setShowOwnerDropdown(false);
+  };
+
+  const handleOwnerInputChange = (value: string) => {
+    setOwnerSearch(value);
+    setShowOwnerDropdown(true);
+    // Если введенное значение точно совпадает с одним из владельцев, устанавливаем его ID
+    const exactMatch = owners.find(
+      owner => `${owner.firstName} ${owner.lastName}`.toLowerCase() === value.toLowerCase()
+    );
+    if (exactMatch) {
+      setFormData({ ...formData, ownerId: exactMatch.id! });
+    } else {
+      setFormData({ ...formData, ownerId: 0 });
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.ownerId) {
+      alert('Please select an owner');
+      return;
+    }
     onSubmit(formData);
   };
 
@@ -114,22 +179,44 @@ function PetForm({ pet, owners, onSubmit, onCancel }: PetFormProps) {
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
-        <div>
+        <div className="relative">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Owner *
           </label>
-          <select
+          <input
+            ref={ownerInputRef}
+            type="text"
             required
-            value={formData.ownerId}
-            onChange={(e) => setFormData({ ...formData, ownerId: Number(e.target.value) })}
+            value={ownerSearch}
+            onChange={(e) => handleOwnerInputChange(e.target.value)}
+            onFocus={() => setShowOwnerDropdown(true)}
+            placeholder="Search owner by name..."
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            {owners.map((owner) => (
-              <option key={owner.id} value={owner.id}>
-                {owner.firstName} {owner.lastName}
-              </option>
-            ))}
-          </select>
+          />
+          {showOwnerDropdown && filteredOwners.length > 0 && (
+            <div
+              ref={ownerDropdownRef}
+              className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+            >
+              {filteredOwners.map((owner) => (
+                <div
+                  key={owner.id}
+                  onClick={() => handleOwnerSelect(owner)}
+                  className="px-4 py-2 hover:bg-indigo-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                >
+                  {owner.firstName} {owner.lastName}
+                </div>
+              ))}
+            </div>
+          )}
+          {showOwnerDropdown && ownerSearch && filteredOwners.length === 0 && (
+            <div
+              ref={ownerDropdownRef}
+              className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg"
+            >
+              <div className="px-4 py-2 text-gray-500">No owners found</div>
+            </div>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -8,14 +8,15 @@ import { useAuth } from '../contexts/AuthContext';
 function Owners() {
   const { user } = useAuth();
   const [owners, setOwners] = useState<Owner[]>([]);
+  const [filteredOwners, setFilteredOwners] = useState<Owner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingOwner, setEditingOwner] = useState<Owner | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const debounceTimerRef = useRef<number | null>(null);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
-  const cursorPositionRef = useRef<number | null>(null);
+  const searchDropdownRef = useRef<HTMLDivElement | null>(null);
   
   const isAdmin = user?.roles?.includes('ADMIN') || false;
 
@@ -23,26 +24,27 @@ function Owners() {
     try {
       setLoading(true);
       const response = await ownerService.getAll(search?.trim() || undefined);
-      setOwners(response.data);
+      const loadedOwners = response.data;
+      setOwners(loadedOwners);
+      
+      // Фильтруем результаты для dropdown
+      if (search?.trim()) {
+        const searchLower = search.trim().toLowerCase();
+        const filtered = loadedOwners.filter(owner => {
+          const fullName = `${owner.firstName} ${owner.lastName}`.toLowerCase();
+          const email = owner.email.toLowerCase();
+          return fullName.includes(searchLower) || email.includes(searchLower);
+        });
+        setFilteredOwners(filtered);
+      } else {
+        setFilteredOwners(loadedOwners);
+      }
+      
       setError(null);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load owners');
     } finally {
       setLoading(false);
-      // Восстанавливаем фокус после загрузки с несколькими попытками
-      setTimeout(() => {
-        requestAnimationFrame(() => {
-          if (searchInputRef.current) {
-            searchInputRef.current.focus();
-            if (cursorPositionRef.current !== null) {
-              searchInputRef.current.setSelectionRange(
-                cursorPositionRef.current,
-                cursorPositionRef.current
-              );
-            }
-          }
-        });
-      }, 0);
     }
   }, []);
 
@@ -51,40 +53,45 @@ function Owners() {
     loadOwners();
   }, [loadOwners]);
 
-  // Debounce search
+  // Update filtered owners when owners change
   useEffect(() => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
+    setFilteredOwners(owners);
+  }, [owners]);
+
+  // Instant search with filtering
+  useEffect(() => {
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.trim().toLowerCase();
+      const filtered = owners.filter(owner => {
+        const fullName = `${owner.firstName} ${owner.lastName}`.toLowerCase();
+        const email = owner.email.toLowerCase();
+        return fullName.includes(searchLower) || email.includes(searchLower);
+      });
+      setFilteredOwners(filtered);
+    } else {
+      setFilteredOwners(owners);
     }
+  }, [searchTerm, owners]);
 
-    debounceTimerRef.current = window.setTimeout(() => {
-      loadOwners(searchTerm);
-    }, 1000);
 
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
+  // Закрываем dropdown при клике вне его
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchDropdownRef.current &&
+        !searchDropdownRef.current.contains(event.target as Node) &&
+        searchInputRef.current &&
+        !searchInputRef.current.contains(event.target as Node)
+      ) {
+        setShowSearchDropdown(false);
       }
     };
-  }, [searchTerm, loadOwners]);
 
-  // Восстанавливаем фокус после каждого изменения loading
-  useEffect(() => {
-    if (!loading && searchInputRef.current && document.activeElement !== searchInputRef.current) {
-      const timer = setTimeout(() => {
-        if (searchInputRef.current) {
-          searchInputRef.current.focus();
-          if (cursorPositionRef.current !== null) {
-            searchInputRef.current.setSelectionRange(
-              cursorPositionRef.current,
-              cursorPositionRef.current
-            );
-          }
-        }
-      }, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [loading]);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleCreate = async (ownerData: Omit<Owner, 'id' | 'createdAt' | 'updatedAt' | 'pets'>) => {
     try {
@@ -145,26 +152,43 @@ function Owners() {
         )}
       </div>
 
-      <div className="mb-4">
+      <div className="mb-4 relative">
         <input
           ref={searchInputRef}
           type="text"
           placeholder="Search owners by name or email..."
           value={searchTerm}
           onChange={(e) => {
-            cursorPositionRef.current = e.target.selectionStart;
             setSearchTerm(e.target.value);
+            setShowSearchDropdown(true);
           }}
-          onFocus={(e) => {
-            if (cursorPositionRef.current !== null) {
-              e.target.setSelectionRange(
-                cursorPositionRef.current,
-                cursorPositionRef.current
-              );
+          onFocus={() => {
+            if (filteredOwners.length > 0) {
+              setShowSearchDropdown(true);
             }
           }}
           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
+        {showSearchDropdown && filteredOwners.length > 0 && searchTerm.trim() && (
+          <div
+            ref={searchDropdownRef}
+            className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+          >
+            {filteredOwners.map((owner) => (
+              <div
+                key={owner.id}
+                onClick={() => {
+                  setSearchTerm(`${owner.firstName} ${owner.lastName}`);
+                  setShowSearchDropdown(false);
+                }}
+                className="px-4 py-2 hover:bg-indigo-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+              >
+                <div className="font-medium">{owner.firstName} {owner.lastName}</div>
+                <div className="text-sm text-gray-500">{owner.email}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {error && (
@@ -190,7 +214,7 @@ function Owners() {
       )}
 
       <OwnerList
-        owners={owners}
+        owners={searchTerm.trim() ? filteredOwners : owners}
         onEdit={setEditingOwner}
         onDelete={handleDelete}
         isAdmin={isAdmin}

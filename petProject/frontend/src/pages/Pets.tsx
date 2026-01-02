@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 function Pets() {
   const { user } = useAuth();
   const [pets, setPets] = useState<Pet[]>([]);
+  const [filteredPets, setFilteredPets] = useState<Pet[]>([]);
   const [owners, setOwners] = useState<Owner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,9 +18,9 @@ function Pets() {
   const [filterOwnerId, setFilterOwnerId] = useState<number | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'all' | 'my'>('all');
-  const debounceTimerRef = useRef<number | null>(null);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
-  const cursorPositionRef = useRef<number | null>(null);
+  const searchDropdownRef = useRef<HTMLDivElement | null>(null);
   
   const isAdmin = user?.roles?.includes('ADMIN') || false;
 
@@ -31,19 +32,24 @@ function Pets() {
         // Загружаем только своих питомцев
         response = await petService.getMyPets();
         // Применяем фильтры на клиенте для своих питомцев
-        let filteredPets = response.data;
+        let allPets = response.data;
         if (filterType) {
-          filteredPets = filteredPets.filter(pet => pet.type === filterType);
+          allPets = allPets.filter(pet => pet.type === filterType);
         }
+        setPets(allPets);
+        
+        // Фильтруем для dropdown
         if (search?.trim()) {
           const searchLower = search.trim().toLowerCase();
-          filteredPets = filteredPets.filter(pet => 
+          const filtered = allPets.filter(pet => 
             pet.name.toLowerCase().includes(searchLower) ||
             pet.breed.toLowerCase().includes(searchLower) ||
             pet.ownerName?.toLowerCase().includes(searchLower)
           );
+          setFilteredPets(filtered);
+        } else {
+          setFilteredPets(allPets);
         }
-        setPets(filteredPets);
       } else {
         // Загружаем всех питомцев с фильтрами
         response = await petService.getAll(
@@ -51,27 +57,27 @@ function Pets() {
           filterOwnerId,
           search?.trim() || undefined
         );
-        setPets(response.data);
+        const allPets = response.data;
+        setPets(allPets);
+        
+        // Фильтруем для dropdown
+        if (search?.trim()) {
+          const searchLower = search.trim().toLowerCase();
+          const filtered = allPets.filter(pet => 
+            pet.name.toLowerCase().includes(searchLower) ||
+            pet.breed.toLowerCase().includes(searchLower) ||
+            pet.ownerName?.toLowerCase().includes(searchLower)
+          );
+          setFilteredPets(filtered);
+        } else {
+          setFilteredPets(allPets);
+        }
       }
       setError(null);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load pets');
     } finally {
       setLoading(false);
-      // Восстанавливаем фокус после загрузки с несколькими попытками
-      setTimeout(() => {
-        requestAnimationFrame(() => {
-          if (searchInputRef.current) {
-            searchInputRef.current.focus();
-            if (cursorPositionRef.current !== null) {
-              searchInputRef.current.setSelectionRange(
-                cursorPositionRef.current,
-                cursorPositionRef.current
-              );
-            }
-          }
-        });
-      }, 0);
     }
   }, [viewMode, filterType, filterOwnerId]);
 
@@ -92,40 +98,45 @@ function Pets() {
     }
   }, [filterType, filterOwnerId, viewMode, loadPets, loadOwners]);
 
-  // Debounced search
+  // Update filtered pets when pets change
   useEffect(() => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
+    setFilteredPets(pets);
+  }, [pets]);
+
+  // Instant search with filtering
+  useEffect(() => {
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.trim().toLowerCase();
+      const filtered = pets.filter(pet => 
+        pet.name.toLowerCase().includes(searchLower) ||
+        pet.breed.toLowerCase().includes(searchLower) ||
+        pet.ownerName?.toLowerCase().includes(searchLower)
+      );
+      setFilteredPets(filtered);
+    } else {
+      setFilteredPets(pets);
     }
+  }, [searchTerm, pets]);
 
-    debounceTimerRef.current = window.setTimeout(() => {
-      loadPets(searchTerm);
-    }, 1000);
 
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
+  // Закрываем dropdown при клике вне его
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchDropdownRef.current &&
+        !searchDropdownRef.current.contains(event.target as Node) &&
+        searchInputRef.current &&
+        !searchInputRef.current.contains(event.target as Node)
+      ) {
+        setShowSearchDropdown(false);
       }
     };
-  }, [searchTerm, loadPets]);
 
-  // Восстанавливаем фокус после каждого изменения loading
-  useEffect(() => {
-    if (!loading && searchInputRef.current && document.activeElement !== searchInputRef.current) {
-      const timer = setTimeout(() => {
-        if (searchInputRef.current) {
-          searchInputRef.current.focus();
-          if (cursorPositionRef.current !== null) {
-            searchInputRef.current.setSelectionRange(
-              cursorPositionRef.current,
-              cursorPositionRef.current
-            );
-          }
-        }
-      }, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [loading]);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleCreate = async (petData: Omit<Pet, 'id' | 'createdAt' | 'updatedAt' | 'ownerName'>) => {
     try {
@@ -215,26 +226,45 @@ function Pets() {
       )}
 
       <div className="mb-4 space-y-4">
-        <div>
+        <div className="relative">
           <input
             ref={searchInputRef}
             type="text"
             placeholder="Search pets by name, breed, or owner..."
             value={searchTerm}
             onChange={(e) => {
-              cursorPositionRef.current = e.target.selectionStart;
               setSearchTerm(e.target.value);
+              setShowSearchDropdown(true);
             }}
-            onFocus={(e) => {
-              if (cursorPositionRef.current !== null) {
-                e.target.setSelectionRange(
-                  cursorPositionRef.current,
-                  cursorPositionRef.current
-                );
+            onFocus={() => {
+              if (filteredPets.length > 0) {
+                setShowSearchDropdown(true);
               }
             }}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
+          {showSearchDropdown && filteredPets.length > 0 && searchTerm.trim() && (
+            <div
+              ref={searchDropdownRef}
+              className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+            >
+              {filteredPets.map((pet) => (
+                <div
+                  key={pet.id}
+                  onClick={() => {
+                    setSearchTerm(pet.name);
+                    setShowSearchDropdown(false);
+                  }}
+                  className="px-4 py-2 hover:bg-indigo-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                >
+                  <div className="font-medium">{pet.name}</div>
+                  <div className="text-sm text-gray-500">
+                    {pet.breed} • {pet.type} {pet.ownerName && `• ${pet.ownerName}`}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <div className="bg-white p-4 rounded-lg shadow flex gap-4">
           <div className="flex-1">
@@ -297,7 +327,7 @@ function Pets() {
       )}
 
       <PetList
-        pets={pets}
+        pets={searchTerm.trim() ? filteredPets : pets}
         onEdit={setEditingPet}
         onDelete={handleDelete}
         isAdmin={isAdmin}
