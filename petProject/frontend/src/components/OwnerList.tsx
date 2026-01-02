@@ -7,6 +7,32 @@ interface OwnerListProps {
   isAdmin: boolean;
 }
 
+// Маскировка номера телефона: +7 999 999 99 99 -> +7-9**-***-**-99
+function maskPhone(phone: string): string {
+  if (!phone) return '';
+  // Извлекаем только цифры
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 11) return phone; // Если номер некорректный, возвращаем как есть
+  
+  // Нормализуем: если начинается с 8, заменяем на 7
+  const normalized = digits.startsWith('8') ? '7' + digits.slice(1) : digits;
+  
+  // Первая цифра после 7 (индекс 1)
+  const firstDigit = normalized[1] || '*';
+  // Последние 2 цифры
+  const lastTwo = normalized.slice(-2);
+  
+  // Форматируем: +7-9**-***-**-99
+  return `+7-${firstDigit}**-***-**-${lastTwo}`;
+}
+
+// Извлечение города из адреса (берем первую часть до запятой, или весь адрес если запятой нет)
+function getCity(address: string): string {
+  if (!address) return '';
+  const parts = address.split(',');
+  return parts[0].trim();
+}
+
 function OwnerList({ owners, onEdit, onDelete, isAdmin }: OwnerListProps) {
   if (owners.length === 0) {
     return (
@@ -30,8 +56,8 @@ function OwnerList({ owners, onEdit, onDelete, isAdmin }: OwnerListProps) {
                 </div>
                 <div className="mt-2 text-sm text-gray-500">
                   <p>📧 {owner.email}</p>
-                  <p>📞 {owner.phone}</p>
-                  <p>📍 {owner.address}</p>
+                  <p>📞 {isAdmin ? owner.phone : maskPhone(owner.phone)}</p>
+                  <p>📍 {isAdmin ? owner.address : getCity(owner.address)}</p>
                   {owner.pets && owner.pets.length > 0 && (
                     <p className="mt-1">🐾 {owner.pets.length} pet(s)</p>
                   )}
